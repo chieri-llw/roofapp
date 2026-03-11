@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>外壁塗装 積算システム</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:#0D1117;color:#E8EAED;font-family:'Noto Sans JP','Segoe UI',sans-serif;display:flex;flex-direction:column}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#111827}::-webkit-scrollbar-thumb{background:#374151;border-radius:3px}
+input,button,select{font-family:inherit;font-size:14px}
+a{color:#3B82F6}
+
+/* Header */
+.header{background:linear-gradient(135deg,#1a1f2e,#111827);border-bottom:1px solid #1f2937;padding:10px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:100}
+.logo{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,#FF8C00,#dc5500);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+
+/* Steps */
+.stepbar{display:flex;overflow-x:auto;padding:6px 12px;gap:4px;background:#111827;border-bottom:1px solid #1f2937;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.stepbar::-webkit-scrollbar{display:none}
+.step{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid #374151;color:#6B7280;background:#1f2937;white-space:nowrap;flex-shrink:0}
+.step.active{background:#1c3a6e;border-color:#3B82F6;color:#60a5fa}
+.step.done{background:#14532d;border-color:#22c55e;color:#4ade80}
+
+/* Main layout - PC: side by side, SP: stacked */
+.main{display:flex;flex:1;overflow:hidden}
+.panel{width:280px;min-width:280px;background:#111827;border-right:1px solid #1f2937;padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+.canvas-wrap{flex:1;overflow:auto;background:#080c14;padding:10px;display:flex;align-items:flex-start;justify-content:center;min-height:300px}
+
+/* Mobile */
+@media(max-width:700px){
+  .main{flex-direction:column;overflow:visible}
+  .panel{width:100%;min-width:unset;border-right:none;border-bottom:1px solid #1f2937;max-height:none;overflow:visible}
+  .canvas-wrap{min-height:55vw;padding:8px}
+  body{overflow-y:auto}
+  .main{overflow:visible}
+}
+
+/* Form elements */
+.lbl{font-size:9px;color:#6B7280;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+input[type=text],input[type=password],input[type=number]{width:100%;padding:9px 11px;border-radius:8px;border:1px solid #374151;background:#1f2937;color:#E8EAED;font-size:14px;outline:none;-webkit-appearance:none}
+input:focus{border-color:#3B82F6}
+.upload-label{display:block;padding:16px 10px;border-radius:10px;border:2px dashed #374151;cursor:pointer;text-align:center;color:#6B7280;font-size:13px;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.upload-label:active{border-color:#FF8C00;color:#FF8C00}
+.btn{width:100%;padding:13px;border-radius:10px;border:none;cursor:pointer;font-size:14px;font-weight:700;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.btn-blue{background:linear-gradient(135deg,#3B82F6,#1d4ed8);color:#fff;box-shadow:0 2px 16px rgba(59,130,246,.4)}
+.btn-blue:active{opacity:.85}
+.btn-blue:disabled{background:#1f2937;color:#6B7280;box-shadow:none;cursor:not-allowed}
+.model-btn{padding:8px 11px;border-radius:8px;border:none;cursor:pointer;text-align:left;font-size:12px;font-weight:600;background:#1f2937;color:#6B7280;border-left:3px solid #374151;margin-bottom:3px;width:100%;font-family:inherit;-webkit-tap-highlight-color:transparent}
+.model-btn.on{background:#1c3a6e;color:#60a5fa;border-left-color:#3B82F6}
+.status-box{padding:9px 11px;border-radius:8px;font-size:11px;background:#1f2937;border:1px solid #374151;color:#9CA3AF;line-height:1.8;white-space:pre-line}
+.card-row{display:flex;gap:6px}
+.card{flex:1;padding:10px 11px;border-radius:8px}
+.box-item{padding:8px 10px;border-radius:7px;cursor:pointer;background:#1f2937;border:1px solid #374151;display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;-webkit-tap-highlight-color:transparent}
+.progress{margin-top:6px;height:3px;border-radius:2px;background:#1f2937;overflow:hidden;position:relative}
+.progress-bar{position:absolute;height:100%;width:50%;background:linear-gradient(90deg,transparent,#3B82F6,transparent);animation:sh 1.5s infinite}
+@keyframes sh{0%{left:-60%}100%{left:160%}}
+canvas{border-radius:8px;box-shadow:0 4px 24px rgba(0,0,0,.7);display:block;touch-action:none;max-width:100%;user-select:none}
+.help-box{padding:13px;border-radius:10px;background:#1f2937;border:1px solid #374151;font-size:11px;color:#6B7280;line-height:2.1}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="logo">🏢</div>
+  <div style="flex:1;min-width:0">
+    <div style="font-size:14px;font-weight:700">外壁塗装 積算システム</div>
+    <div style="font-size:10px;color:#6B7280;margin-top:1px">
+      <span style="color:#FF8C00">■壁</span> − <span style="color:#22c55e">■窓</span> = 正味塗装面積　<span style="color:#374151">by Roboflow</span>
+    </div>
+  </div>
+  <div id="ppmBadge" style="display:none;background:#1f2937;border:1px solid #374151;border-radius:6px;padding:4px 9px;font-size:10px;white-space:nowrap;flex-shrink:0"></div>
+</div>
+
+<!-- Steps -->
+<div class="stepbar">
+  <div class="step active" id="s1">📁 ①画像</div>
+  <span style="color:#374151;font-size:10px;line-height:26px">›</span>
+  <div class="step" id="s2">📏 ②スケール</div>
+  <span style="color:#374151;font-size:10px;line-height:26px">›</span>
+  <div class="step" id="s3">🔍 ③検出</div>
+  <span style="color:#374151;font-size:10px;line-height:26px">›</span>
+  <div class="step" id="s4">📊 ④結果</div>
+</div>
+
+<!-- Body -->
+<div class="main">
+
+  <!-- Panel -->
+  <div class="panel">
+
+    <!-- API Key -->
+    <div>
+      <div class="lbl">Roboflow Private API Key</div>
+      <input type="password" id="apiKey" placeholder="d1Mg... (Private Keyの方)">
+      <div style="font-size:9px;margin-top:5px;padding:7px 9px;border-radius:6px;background:#2a1500;border:1px solid #FF8C0055;color:#FFD084;line-height:1.7">
+        ⚠️ <b>Private Key</b>（d1Mg...）を使用<br>
+        <a href="https://app.roboflow.com/settings/api" target="_blank">app.roboflow.com</a> → Workspace Settings → 👁アイコンでコピー
+      </div>
+    </div>
+
+    <!-- Upload -->
+    <div>
+      <div class="lbl">建物画像</div>
+      <label class="upload-label">
+        📷 タップして画像を選択
+        <div style="font-size:11px;color:#4B5563;margin-top:3px">正面写真が最適・カメラ撮影もOK</div>
+        <input type="file" accept="image/*" capture="environment" onchange="handleUpload(event)" style="display:none">
+      </label>
+    </div>
+
+    <!-- Scale -->
+    <div id="scaleSection" style="display:none">
+      <div class="lbl">基準スケール（mm）</div>
+      <input type="number" id="refMm" value="19512" style="margin-bottom:8px" inputmode="numeric">
+      <div id="scalePtBox" style="padding:9px;border-radius:8px;background:#14532d22;border:1px solid #166534;font-size:12px;color:#4ade80;line-height:1.8;display:none">
+        📍 画像上で最長辺の両端A→Bをタップ
+        <div style="display:flex;gap:5px;margin-top:5px">
+          <div id="ptA" style="flex:1;text-align:center;padding:5px;border-radius:5px;background:#14532d22;border:1px solid #166534;color:#4B5563;font-size:12px">点A —</div>
+          <div id="ptB" style="flex:1;text-align:center;padding:5px;border-radius:5px;background:#14532d22;border:1px solid #166534;color:#4B5563;font-size:12px">点B —</div>
+        </div>
+      </div>
+      <div id="scaleOk" style="font-size:12px;color:#4ade80;display:none;justify-content:space-between;align-items:center">
+        <span>✓ スケール設定済み</span>
+        <button onclick="resetScale()" style="font-size:11px;color:#6B7280;background:none;border:none;cursor:pointer;text-decoration:underline;padding:4px">再設定</button>
+      </div>
+    </div>
+
+    <!-- Model + Detect -->
+    <div id="detectSection" style="display:none">
+      <div class="lbl">検出モデル</div>
+      <div id="modelList"></div>
+      <button class="btn btn-blue" id="detectBtn" onclick="detect()">🔍 Roboflow で検出</button>
+      <div class="progress" id="prog" style="display:none"><div class="progress-bar"></div></div>
+    </div>
+
+    <div class="status-box" id="statusBox" style="display:none"></div>
+
+    <!-- Results -->
+    <div id="results" style="display:none">
+      <div class="card-row">
+        <div class="card" style="background:#1a1500;border:1px solid rgba(255,140,0,.4)">
+          <div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">計測面（壁）</div>
+          <div id="wallTotal" style="font-size:20px;font-weight:800;color:#FF8C00;line-height:1">—</div>
+          <div id="wallCount" style="font-size:10px;color:#6B7280;margin-top:1px"></div>
+        </div>
+        <div class="card" style="background:#0a2010;border:1px solid rgba(34,197,94,.4)">
+          <div style="font-size:9px;color:#9CA3AF;margin-bottom:2px">除外面（窓）</div>
+          <div id="winTotal" style="font-size:20px;font-weight:800;color:#22c55e;line-height:1">—</div>
+          <div id="winCount" style="font-size:10px;color:#6B7280;margin-top:1px"></div>
+        </div>
+      </div>
+      <div style="padding:14px;border-radius:10px;background:linear-gradient(135deg,#1c0900,#2a1200);border:2px solid #FF8C00;margin-top:6px">
+        <div style="font-size:10px;color:#FFD084;font-weight:700;margin-bottom:4px">✅ 除外後 塗装面積</div>
+        <div id="netTotal" style="font-size:36px;font-weight:900;color:#fff;line-height:1">—</div>
+        <div id="netFormula" style="font-size:10px;color:#6B7280;margin-top:5px"></div>
+      </div>
+      <div style="margin-top:12px">
+        <div class="lbl">検出一覧 <span style="font-weight:400;text-transform:none">（タップ→再タップで壁↔窓）</span></div>
+        <div id="boxList"></div>
+      </div>
+    </div>
+
+    <!-- Help -->
+    <div class="help-box" id="helpBox">
+      <div style="font-weight:700;color:#9CA3AF;margin-bottom:7px">📖 使い方</div>
+      <div>① Private Key（d1Mg...）を入力</div>
+      <div>② 建物の写真をアップ</div>
+      <div>③ 最長辺の両端A→Bをタップ</div>
+      <div>④ 🔍 Roboflowで自動検出</div>
+      <div>⑤ ズレはタップして手動修正</div>
+    </div>
+
+  </div><!-- /panel -->
+
+  <!-- Canvas -->
+  <div class="canvas-wrap">
+    <div id="emptyState" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:260px;gap:12px;width:100%">
+      <div style="font-size:52px">🏢</div>
+      <div style="font-size:14px;font-weight:600;color:#374151">建物の正面写真をアップロード</div>
+      <div style="padding:12px 18px;border-radius:10px;background:#111827;border:1px solid #1f2937;font-size:11px;line-height:2.2;color:#6B7280;text-align:center">
+        <div><span style="color:#FF8C00;font-weight:700">■ オレンジ</span>　壁面 → 計測面</div>
+        <div><span style="color:#22c55e;font-weight:700">■ 緑</span>　　　窓・扉 → 除外面</div>
+      </div>
+    </div>
+    <canvas id="canvas" style="display:none"></canvas>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+const MODELS=[
+  {id:"building-za5v0/1",            label:"Wall/Window/Door 検出"},
+  {id:"building-door-gate-window/1", label:"建物外壁特化"},
+  {id:"window-detection-kcu6x/1",    label:"Window 専用"},
+];
+let midx=0,scalePts=[],ppm=null,imgB64=null,imgOrigW=0,imgOrigH=0;
+let boxes=[],selBox=null,step='upload';
+const cvImg=new Image();
+
+function renderModels(){
+  document.getElementById('modelList').innerHTML=
+    MODELS.map((m,i)=>`<button class="model-btn${i===midx?' on':''}" onclick="setModel(${i})">${i+1}. ${m.label}</button>`).join('');
+}
+function setModel(i){midx=i;renderModels();}
+renderModels();
+
+function goStep(s){
+  step=s;
+  const keys=['upload','scale','detect','result'];
+  const cur=keys.indexOf(s);
+  keys.forEach((k,i)=>document.getElementById('s'+(i+1)).className='step'+(i<cur?' done':i===cur?' active':''));
+}
+
+// Upload
+function handleUpload(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const tmp=new Image();
+    tmp.onload=()=>{
+      const c=document.createElement('canvas');
+      c.width=tmp.naturalWidth;c.height=tmp.naturalHeight;
+      c.getContext('2d').drawImage(tmp,0,0);
+      const url=c.toDataURL('image/jpeg',0.88);
+      imgB64=url.split(',')[1];
+      imgOrigW=tmp.naturalWidth;imgOrigH=tmp.naturalHeight;
+      boxes=[];scalePts=[];ppm=null;selBox=null;
+      loadCanvas(url);
+      goStep('scale');
+      show('scaleSection');show('scalePtBox');
+      hide('scaleOk');hide('results');hide('helpBox');
+      setStatus('建物の最長辺の両端 A→B をタップしてください');
+    };
+    tmp.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function loadCanvas(url){
+  cvImg.onload=()=>{
+    const MAX=window.innerWidth>700?920:window.innerWidth-20;
+    const sc=cvImg.naturalWidth>MAX?MAX/cvImg.naturalWidth:1;
+    const cv=document.getElementById('canvas');
+    cv.width=Math.round(cvImg.naturalWidth*sc);
+    cv.height=Math.round(cvImg.naturalHeight*sc);
+    cv.style.display='block';
+    hide('emptyState');
+    // Touch & click
+    cv.ontouchstart=onTouch;
+    cv.onclick=onClick;
+    draw();
+    // スマホで見える位置にスクロール
+    cv.scrollIntoView({behavior:'smooth',block:'start'});
+  };
+  cvImg.src=url;
+}
+
+function getPos(e,cv){
+  const r=cv.getBoundingClientRect();
+  return{
+    cx:(e.clientX-r.left)*(cv.width/r.width),
+    cy:(e.clientY-r.top)*(cv.height/r.height),
+    nx:(e.clientX-r.left)/r.width,
+    ny:(e.clientY-r.top)/r.height,
+  };
+}
+
+function onTouch(e){
+  e.preventDefault();
+  const t=e.changedTouches[0];
+  handlePos(t.clientX,t.clientY);
+}
+function onClick(e){handlePos(e.clientX,e.clientY);}
+
+function handlePos(cx,cy){
+  const cv=document.getElementById('canvas'),r=cv.getBoundingClientRect();
+  const pcx=(cx-r.left)*(cv.width/r.width);
+  const pcy=(cy-r.top)*(cv.height/r.height);
+  const nx=pcx/cv.width,ny=pcy/cv.height;
+
+  if(step==='scale'){
+    scalePts=scalePts.length>=2?[{cx:pcx,cy:pcy}]:[...scalePts,{cx:pcx,cy:pcy}];
+    setPt('ptA',scalePts[0]);setPt('ptB',scalePts[1]);
+    if(scalePts.length===2){
+      const dx=scalePts[1].cx-scalePts[0].cx,dy=scalePts[1].cy-scalePts[0].cy;
+      ppm=Math.sqrt(dx*dx+dy*dy)/+document.getElementById('refMm').value;
+      hide('scalePtBox');
+      document.getElementById('scaleOk').style.display='flex';
+      const b=document.getElementById('ppmBadge');
+      b.style.display='block';
+      b.innerHTML=`<span style="color:#9CA3AF">1mm=</span><span style="color:#FFD84D;font-weight:700">${ppm.toFixed(3)}px</span>`;
+      show('detectSection');goStep('detect');
+      setStatus('✅ スケール完了！ 🔍 で検出してください');
+    }
+    draw();return;
+  }
+  if(step==='result'){
+    let found=null;
+    boxes.forEach((b,i)=>{if(nx>=b.cx-b.w/2&&nx<=b.cx+b.w/2&&ny>=b.cy-b.h/2&&ny<=b.cy+b.h/2)found=i;});
+    if(found!==null){
+      if(selBox===found){boxes[found].type=boxes[found].type==='wall'?'window':'wall';selBox=null;updateResults();}
+      else selBox=found;
+    }else selBox=null;
+    draw();
+  }
+}
+
+function setPt(id,pt){
+  const el=document.getElementById(id),label=id==='ptA'?'点A':'点B';
+  if(pt){el.textContent=label+' ✓';el.style.background='#166534';el.style.color='#4ade80';el.style.borderColor='#22c55e';}
+  else{el.textContent=label+' —';el.style.background='#14532d22';el.style.color='#4B5563';el.style.borderColor='#166534';}
+}
+
+function resetScale(){
+  scalePts=[];ppm=null;
+  show('scalePtBox');hide('scaleOk');
+  setPt('ptA',null);setPt('ptB',null);
+  document.getElementById('ppmBadge').style.display='none';
+  goStep('scale');setStatus('基準線の両端をタップしてください');draw();
+}
+
+// Detect
+async function detect(){
+  const key=document.getElementById('apiKey').value.trim();
+  if(!key){setStatus('⚠️ Private API Key（d1Mg...）を入力してください');return;}
+  if(!imgB64){setStatus('⚠️ 画像をアップロードしてください');return;}
+  const btn=document.getElementById('detectBtn');
+  btn.disabled=true;show('prog');
+  setStatus(`🔍 「${MODELS[midx].label}」で検出中...`);selBox=null;
+  try{
+    const res=await fetch(
+      `https://serverless.roboflow.com/${MODELS[midx].id}?api_key=${encodeURIComponent(key)}`,
+      {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:imgB64}
+    );
+    if(!res.ok)throw new Error(`HTTP ${res.status}`);
+    const data=await res.json();
+    if(data.error||data.message)throw new Error(data.error||data.message);
+    const preds=data.predictions||[];
+    if(preds.length===0){setStatus('⚠️ 検出なし。別モデルを試してください');return;}
+    const rfW=data.image?.width||imgOrigW,rfH=data.image?.height||imgOrigH;
+    boxes=preds.map((p,i)=>({id:i,cx:p.x/rfW,cy:p.y/rfH,w:p.width/rfW,h:p.height/rfH,cls:p.class,type:c2t(p.class),conf:p.confidence}));
+    goStep('result');
+    const wc=boxes.filter(b=>b.type==='wall').length,gc=boxes.filter(b=>b.type==='window').length;
+    setStatus(`✅ ${preds.length}個を検出\n壁×${wc}（オレンジ）　窓/扉×${gc}（緑）\nタップ→再タップで壁↔窓を切替`);
+    updateResults();draw();
+  }catch(err){
+    setStatus('⚠️ '+err.message+'\n\n・Private Key（d1Mg...）を使っているか確認\n・ネット接続を確認\n・別モデルを試してください');
+  }finally{btn.disabled=false;hide('prog');}
+}
+
+function c2t(cls){
+  const c=(cls||'').toLowerCase();
+  if(c.includes('wall')||c.includes('build'))return'wall';
+  return'window';
+}
+
+function updateResults(){
+  const cv=document.getElementById('canvas'),W=cv.width,H=cv.height;
+  const wb=boxes.filter(b=>b.type==='wall'),gb=boxes.filter(b=>b.type==='window');
+  const wt=wb.reduce((s,b)=>s+b.w*W*b.h*H/(ppm*ppm),0);
+  const gt=gb.reduce((s,b)=>s+b.w*W*b.h*H/(ppm*ppm),0);
+  const nt=wt-gt;
+  show('results');
+  document.getElementById('wallTotal').textContent=(wt/1e6).toFixed(2)+' m²';
+  document.getElementById('wallCount').textContent=wb.length+'個';
+  document.getElementById('winTotal').textContent=(gt/1e6).toFixed(2)+' m²';
+  document.getElementById('winCount').textContent=gb.length+'個';
+  document.getElementById('netTotal').innerHTML=(nt/1e6).toFixed(2)+'<span style="font-size:17px;color:#FF8C00;margin-left:5px">m²</span>';
+  document.getElementById('netFormula').textContent=`計測${(wt/1e6).toFixed(2)} − 除外${(gt/1e6).toFixed(2)} = ${(nt/1e6).toFixed(2)} m²`;
+  document.getElementById('boxList').innerHTML=boxes.map((b,i)=>{
+    const isW=b.type==='wall',col=isW?'#FF8C00':'#22c55e',isSel=selBox===i;
+    const mm2=b.w*W*b.h*H/(ppm*ppm);
+    return`<div class="box-item" style="background:${isSel?(isW?'#2a1500':'#0a2010'):'#1f2937'};border-color:${isSel?col:'#374151'}" onclick="clickBox(${i})">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div style="width:7px;height:7px;border-radius:1px;background:${col};flex-shrink:0"></div>
+        <span style="font-size:11px;font-weight:600;color:${isSel?'#fff':'#C9D1D9'}">${isW?'壁':'窓/扉'}<span style="color:#6B7280;font-weight:400;font-size:10px;margin-left:4px">${b.cls} ${Math.round(b.conf*100)}%</span></span>
+      </div>
+      <span style="font-size:11px;color:${col};font-weight:700;flex-shrink:0">${(mm2/1e6).toFixed(2)}m²</span>
+    </div>`;
+  }).join('');
+}
+
+function clickBox(i){
+  if(selBox===i){boxes[i].type=boxes[i].type==='wall'?'window':'wall';selBox=null;updateResults();}
+  else selBox=i;
+  draw();
+}
+
+function draw(){
+  const cv=document.getElementById('canvas');
+  if(!cv||!cvImg.src)return;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.drawImage(cvImg,0,0,W,H);
+  boxes.forEach((b,i)=>{
+    const isW=b.type==='wall',isSel=selBox===i,col=isW?'#FF8C00':'#22c55e';
+    const x=(b.cx-b.w/2)*W,y=(b.cy-b.h/2)*H,bw=b.w*W,bh=b.h*H;
+    ctx.fillStyle=isW?(isSel?'rgba(255,140,0,.42)':'rgba(255,140,0,.20)'):(isSel?'rgba(34,197,94,.42)':'rgba(34,197,94,.18)');
+    ctx.fillRect(x,y,bw,bh);
+    ctx.strokeStyle=isSel?'#fff':col;ctx.lineWidth=isSel?3:2;ctx.setLineDash([]);ctx.strokeRect(x,y,bw,bh);
+    if(ppm){
+      const mmW=Math.round(bw/ppm).toLocaleString(),mmH=Math.round(bh/ppm).toLocaleString();
+      const bg=isW?'rgba(170,60,0,.92)':'rgba(10,90,30,.92)';
+      ctx.font='bold 10px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+      const tw1=ctx.measureText(mmW).width;
+      ctx.fillStyle=bg;ctx.fillRect(x+bw/2-tw1/2-4,y-16,tw1+8,14);
+      ctx.fillStyle='#fff';ctx.fillText(mmW,x+bw/2,y-9);
+      ctx.save();ctx.translate(x-8,y+bh/2);ctx.rotate(-Math.PI/2);
+      const tw2=ctx.measureText(mmH).width;
+      ctx.fillStyle=bg;ctx.fillRect(-tw2/2-4,-7,tw2+8,14);
+      ctx.fillStyle='#fff';ctx.fillText(mmH,0,0);ctx.restore();
+    }
+    const mm2=ppm?bw*bh/(ppm*ppm):0;
+    const lbl=(isW?'壁 ':'窓 ')+(ppm?(mm2/1e6).toFixed(2)+'m²':'');
+    ctx.font='bold 11px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+    const tw=ctx.measureText(lbl).width;
+    ctx.fillStyle=isW?'rgba(200,75,0,.92)':'rgba(20,100,40,.92)';
+    const bx=x+bw/2-tw/2-5,by=y+bh/2-9;
+    ctx.beginPath();if(ctx.roundRect)ctx.roundRect(bx,by,tw+10,18,4);else ctx.rect(bx,by,tw+10,18);
+    ctx.fill();ctx.fillStyle='#fff';ctx.fillText(lbl,x+bw/2,y+bh/2);
+  });
+  scalePts.forEach((p,i)=>{
+    ctx.beginPath();ctx.arc(p.cx,p.cy,8,0,Math.PI*2);
+    ctx.fillStyle='#FFD84D';ctx.fill();
+    ctx.strokeStyle='#000';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#000';ctx.font='bold 13px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(i===0?'A':'B',p.cx,p.cy+1);
+  });
+  if(scalePts.length===2){
+    ctx.beginPath();ctx.moveTo(scalePts[0].cx,scalePts[0].cy);ctx.lineTo(scalePts[1].cx,scalePts[1].cy);
+    ctx.strokeStyle='#FFD84D';ctx.lineWidth=2;ctx.setLineDash([6,3]);ctx.stroke();ctx.setLineDash([]);
+    const mx=(scalePts[0].cx+scalePts[1].cx)/2,my=(scalePts[0].cy+scalePts[1].cy)/2;
+    const ref=document.getElementById('refMm').value;
+    ctx.font='bold 11px Arial';const tw=ctx.measureText(ref+'mm').width;
+    ctx.fillStyle='rgba(255,216,77,.92)';
+    ctx.beginPath();if(ctx.roundRect)ctx.roundRect(mx-tw/2-5,my-26,tw+10,16,3);else ctx.rect(mx-tw/2-5,my-26,tw+10,16);
+    ctx.fill();ctx.fillStyle='#000';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(ref+'mm',mx,my-18);
+  }
+}
+
+function setStatus(msg){show('statusBox');document.getElementById('statusBox').textContent=msg;}
+function show(id){document.getElementById(id).style.display='block';}
+function hide(id){document.getElementById(id).style.display='none';}
+</script>
+</body>
+</html>
