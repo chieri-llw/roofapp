@@ -4,44 +4,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>外壁塗装 積算システム — AI Edition</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #0a0c10;
-  --bg2: #111318;
-  --bg3: #1a1d24;
-  --border: #252830;
-  --border2: #2e3240;
-  --orange: #FF6B2B;
-  --orange2: #FF8C50;
-  --green: #22c55e;
-  --blue: #3B82F6;
-  --text: #E2E4E9;
-  --muted: #6B7280;
-  --muted2: #4B5563;
-}
+:root{--bg:#0a0c10;--bg2:#111318;--bg3:#1a1d24;--border:#252830;--border2:#2e3240;--orange:#FF6B2B;--green:#22c55e;--blue:#3B82F6;--text:#E2E4E9;--muted:#6B7280;--muted2:#4B5563}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif}
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-track{background:var(--bg2)}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
 .header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
 .logo{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--orange),#c94400);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
-.title-wrap{flex:1}
-.title-wrap h1{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;letter-spacing:.03em;color:var(--text)}
+.title-wrap{flex:1}.title-wrap h1{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;letter-spacing:.03em}
 .title-wrap p{font-size:10px;color:var(--muted);margin-top:1px}
 .ai-badge{padding:4px 10px;border-radius:20px;background:linear-gradient(135deg,#1a1f35,#0f1525);border:1px solid #2a3060;font-size:10px;font-weight:700;color:#60a5fa;letter-spacing:.05em}
-.steps{display:flex;gap:0;overflow-x:auto;background:var(--bg2);border-bottom:1px solid var(--border);scrollbar-width:none}
+.steps{display:flex;overflow-x:auto;background:var(--bg2);border-bottom:1px solid var(--border);scrollbar-width:none}
 .steps::-webkit-scrollbar{display:none}
-.step{display:flex;align-items:center;gap:6px;padding:8px 14px;font-size:11px;font-weight:700;color:var(--muted2);white-space:nowrap;flex-shrink:0;border-bottom:2px solid transparent;cursor:default;transition:all .2s}
+.step{display:flex;align-items:center;gap:6px;padding:8px 14px;font-size:11px;font-weight:700;color:var(--muted2);white-space:nowrap;flex-shrink:0;border-bottom:2px solid transparent;transition:all .2s}
 .step .num{width:18px;height:18px;border-radius:50%;background:var(--border2);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800}
-.step.active{color:var(--orange);border-bottom-color:var(--orange)}
-.step.active .num{background:var(--orange);color:#fff}
-.step.done{color:var(--green)}
-.step.done .num{background:var(--green);color:#fff}
+.step.active{color:var(--orange);border-bottom-color:var(--orange)}.step.active .num{background:var(--orange);color:#fff}
+.step.done{color:var(--green)}.step.done .num{background:var(--green);color:#fff}
 .layout{display:flex;height:calc(100vh - 93px)}
-.panel{width:300px;min-width:300px;background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;gap:0}
+.panel{width:300px;min-width:300px;background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
 .canvas-area{flex:1;background:var(--bg);overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:16px}
 .section{padding:14px;border-bottom:1px solid var(--border)}
 .section-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:10px}
@@ -49,16 +30,20 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto S
 input[type=text],input[type=password],input[type=number]{width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:13px;font-family:inherit;outline:none;-webkit-appearance:none;transition:border .2s}
 input:focus{border-color:var(--blue)}
 .hint{margin-top:5px;padding:8px 10px;border-radius:6px;background:#1a1000;border:1px solid rgba(255,107,43,.25);font-size:10px;color:#FFB07A;line-height:1.7}
-.upload-zone{padding:18px 12px;border-radius:10px;border:2px dashed var(--border2);cursor:pointer;text-align:center;color:var(--muted);font-size:13px;transition:all .2s;-webkit-tap-highlight-color:transparent;display:block}
-.upload-zone:hover,.upload-zone:active{border-color:var(--orange);color:var(--orange)}
+.upload-zone{padding:18px 12px;border-radius:10px;border:2px dashed var(--border2);cursor:pointer;text-align:center;color:var(--muted);font-size:13px;transition:all .2s;display:block}
+.upload-zone:hover{border-color:var(--orange);color:var(--orange)}
 .scale-pts{display:flex;gap:6px;margin-top:8px}
 .pt-box{flex:1;text-align:center;padding:7px 6px;border-radius:7px;border:1px solid var(--border2);background:var(--bg3);font-size:11px;color:var(--muted2);transition:all .2s}
 .pt-box.set{border-color:var(--green);color:var(--green);background:#0a2015}
 .scale-done{display:none;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:8px;background:#0a2015;border:1px solid rgba(34,197,94,.3);font-size:12px;color:var(--green);margin-top:6px}
 .reset-btn{background:none;border:none;cursor:pointer;font-size:11px;color:var(--muted);text-decoration:underline;font-family:inherit;padding:2px 4px}
-.detect-btn{width:100%;padding:13px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--orange),#c94400);color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent;box-shadow:0 4px 20px rgba(255,107,43,.35)}
+/* mode toggle */
+.mode-wrap{display:flex;gap:6px;margin-bottom:10px}
+.mode-btn{flex:1;padding:8px 6px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted);font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .2s;text-align:center}
+.mode-btn.on{background:#1c3a6e;border-color:var(--blue);color:#60a5fa}
+.mode-btn.on-orange{background:#2a1000;border-color:var(--orange);color:var(--orange)}
+.detect-btn{width:100%;padding:13px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--orange),#c94400);color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .2s;box-shadow:0 4px 20px rgba(255,107,43,.35)}
 .detect-btn:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(255,107,43,.5)}
-.detect-btn:active{transform:translateY(0)}
 .detect-btn:disabled{background:var(--bg3);color:var(--muted2);box-shadow:none;cursor:not-allowed;transform:none}
 .progress{height:2px;border-radius:1px;background:var(--border);overflow:hidden;margin-top:8px;display:none}
 .progress-bar{height:100%;width:40%;background:linear-gradient(90deg,transparent,var(--orange),transparent);animation:slide 1.5s infinite}
@@ -73,8 +58,7 @@ input:focus{border-color:var(--blue)}
 .net-label{font-size:10px;color:#FFB07A;font-weight:700;margin-bottom:4px}
 .net-val{font-family:'Syne',sans-serif;font-size:38px;font-weight:800;color:#fff;line-height:1}
 .net-formula{font-size:10px;color:var(--muted);margin-top:6px}
-.box-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:7px;background:var(--bg3);border:1px solid var(--border2);margin-bottom:3px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s}
-.box-item:active{transform:scale(.98)}
+.box-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:7px;background:var(--bg3);border:1px solid var(--border2);margin-bottom:3px;cursor:pointer;transition:all .15s}
 .box-item.selected{border-color:var(--orange)}
 .box-left{display:flex;align-items:center;gap:7px}
 .dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
@@ -84,16 +68,9 @@ input:focus{border-color:var(--blue)}
 .help{padding:14px;border-radius:10px;background:var(--bg3);border:1px solid var(--border2);font-size:11px;color:var(--muted);line-height:2.1}
 .help strong{color:var(--text);font-weight:700}
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;gap:14px;width:100%;text-align:center}
-.empty-icon{font-size:56px}
-.empty-title{font-size:15px;font-weight:700;color:var(--muted)}
 .empty-legend{padding:12px 18px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);font-size:11px;line-height:2.3;color:var(--muted)}
-@media(max-width:700px){
-  .layout{flex-direction:column;height:auto}
-  .panel{width:100%;min-width:unset;border-right:none;border-bottom:1px solid var(--border)}
-  .canvas-area{min-height:60vw;padding:8px}
-  body{overflow-y:auto}
-}
-canvas{border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.8);display:block;touch-action:none;max-width:100%;user-select:none;cursor:crosshair}
+@media(max-width:700px){.layout{flex-direction:column;height:auto}.panel{width:100%;min-width:unset;border-right:none;border-bottom:1px solid var(--border)}.canvas-area{min-height:60vw;padding:8px}body{overflow-y:auto}}
+canvas{border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.8);display:block;touch-action:none;max-width:100%;user-select:none}
 </style>
 </head>
 <body>
@@ -101,7 +78,7 @@ canvas{border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.8);display:block;tou
   <div class="logo">🏢</div>
   <div class="title-wrap">
     <h1>外壁塗装 積算システム</h1>
-    <p id="ppmInfo">■壁 − ■窓 = 正味塗装面積</p>
+    <p id="ppmInfo">■外壁全体 − ■窓・扉 = 正味塗装面積</p>
   </div>
   <div class="ai-badge">Claude AI</div>
 </div>
@@ -115,15 +92,14 @@ canvas{border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.8);display:block;tou
   <div class="panel">
     <div class="section">
       <div class="section-title">Anthropic API Key</div>
-      <div class="field-label">API Key</div>
       <input type="password" id="apiKey" placeholder="sk-ant-...">
       <div class="hint">🔑 <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:#FF8C50">console.anthropic.com</a> → API Keys → Create Key</div>
     </div>
     <div class="section">
-      <div class="section-title">建物画像</div>
+      <div class="section-title">建物画像（正面写真）</div>
       <label class="upload-zone">
         📷 タップして画像を選択
-        <div style="font-size:11px;color:var(--muted2);margin-top:3px">正面・側面写真が最適</div>
+        <div style="font-size:11px;color:var(--muted2);margin-top:3px">正面から撮影した写真を使用</div>
         <input type="file" accept="image/*" capture="environment" onchange="handleUpload(event)" style="display:none">
       </label>
     </div>
@@ -131,7 +107,7 @@ canvas{border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.8);display:block;tou
       <div class="section-title">スケール設定</div>
       <div class="field-label">基準長さ（mm）</div>
       <input type="number" id="refMm" value="2730" inputmode="numeric" style="margin-bottom:8px">
-      <div style="font-size:10px;color:var(--muted);margin-bottom:8px">実寸が分かる箇所でA→Bをタップ（例：扉高2730mm）</div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:8px">実寸が分かる箇所（扉高2730mm等）をA→Bでタップ</div>
       <div class="scale-pts">
         <div class="pt-box" id="ptA">点A —</div>
         <div class="pt-box" id="ptB">点B —</div>
@@ -142,10 +118,27 @@ canvas{border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.8);display:block;tou
       </div>
     </div>
     <div class="section" id="detectSection" style="display:none">
-      <div class="section-title">AI解析</div>
-      <button class="detect-btn" id="detectBtn" onclick="detect()">✦ Claude AIで壁面を解析</button>
-      <div class="progress" id="prog"><div class="progress-bar"></div></div>
-      <div class="status" id="statusBox"></div>
+      <div class="section-title">AI解析モード</div>
+      <div class="mode-wrap">
+        <div class="mode-btn on" id="modeAuto" onclick="setMode('auto')">🤖 自動解析</div>
+        <div class="mode-btn" id="modeManual" onclick="setMode('manual')">✏️ 手動描画</div>
+      </div>
+      <div id="autoPanel">
+        <button class="detect-btn" id="detectBtn" onclick="detect()">✦ Claude AIで壁面を解析</button>
+        <div class="progress" id="prog"><div class="progress-bar"></div></div>
+        <div class="status" id="statusBox"></div>
+      </div>
+      <div id="manualPanel" style="display:none">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.8">
+          画像上でドラッグして矩形を描きます<br>
+          描画後にタイプを選択してください
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <button onclick="setDrawType('wall')" id="drawWallBtn" style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--orange);background:#2a1000;color:var(--orange);font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">＋ 壁面を追加</button>
+          <button onclick="setDrawType('window')" id="drawWinBtn" style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--green);background:#0a2015;color:var(--green);font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">＋ 窓・扉を追加</button>
+        </div>
+        <div id="drawTypeHint" style="font-size:10px;color:var(--muted);padding:6px 8px;background:var(--bg3);border-radius:6px;display:none"></div>
+      </div>
     </div>
     <div class="section" id="resultsSection" style="display:none">
       <div class="section-title">計測結果</div>
@@ -156,7 +149,7 @@ canvas{border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.8);display:block;tou
       </div>
       <div class="result-cards">
         <div class="rcard">
-          <div class="rcard-label" style="color:#FF8C50">■ 壁面（計測）</div>
+          <div class="rcard-label" style="color:#FF8C50">■ 外壁（計測）</div>
           <div class="rcard-val" id="wallVal" style="color:var(--orange)">—</div>
           <div class="rcard-sub" id="wallCount"></div>
         </div>
@@ -166,40 +159,41 @@ canvas{border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.8);display:block;tou
           <div class="rcard-sub" id="winCount"></div>
         </div>
       </div>
-      <div class="section-title" style="margin-top:4px">検出一覧 <span style="font-weight:400;text-transform:none;color:var(--muted2)">(タップで壁↔窓切替)</span></div>
+      <div class="section-title" style="margin-top:4px">検出一覧 <span style="font-weight:400;text-transform:none;color:var(--muted2)">(タップで壁↔窓切替・長押しで削除)</span></div>
       <div id="boxList"></div>
     </div>
     <div class="section">
       <div class="help">
         <div style="font-weight:700;color:var(--text);margin-bottom:6px">📖 使い方</div>
-        <div>① Anthropic API Keyを入力</div>
-        <div>② 建物の正面・側面写真をアップ</div>
-        <div>③ 実寸既知の箇所でA→Bをタップ</div>
-        <div>④ <strong>Claude AIで解析</strong>ボタンを押す</div>
-        <div>⑤ タップで壁↔窓を手動修正</div>
-        <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border2)">
-          <strong>Roboflowとの違い</strong><br>
-          汎用モデル不要。Claude AIが写真を直接理解し、日本の建物にも正確に対応
-        </div>
+        <div>① API Keyを入力</div>
+        <div>② <strong>正面から撮影した写真</strong>をアップ</div>
+        <div>③ 実寸が分かる箇所でA→Bをタップ</div>
+        <div>④ <strong>Claude AIで解析</strong>を押す</div>
+        <div>⑤ 誤検出はタップで壁↔窓を切替</div>
+        <div>⑥ 手動描画で追加・修正も可能</div>
       </div>
     </div>
   </div>
   <div class="canvas-area">
     <div class="empty" id="emptyState">
-      <div class="empty-icon">🏠</div>
-      <div class="empty-title">建物の写真をアップロード</div>
+      <div style="font-size:56px">🏠</div>
+      <div style="font-size:15px;font-weight:700;color:var(--muted)">建物の正面写真をアップロード</div>
       <div class="empty-legend">
-        <div><span style="color:var(--orange);font-weight:700">■ オレンジ</span>　壁面 → 計測面積に加算</div>
+        <div><span style="color:var(--orange);font-weight:700">■ オレンジ</span>　外壁面 → 計測面積に加算</div>
         <div><span style="color:var(--green);font-weight:700">■ 緑</span>　　　　窓・扉 → 計測面積から除外</div>
       </div>
     </div>
     <canvas id="canvas" style="display:none"></canvas>
   </div>
 </div>
+
 <script>
-let scalePts=[],ppm=null,imgB64=null,imgOrigW=0,imgOrigH=0;
+let scalePts=[],ppm=null,imgB64=null;
 let boxes=[],selBox=null,step='upload';
+let mode='auto',drawType=null,isDrawing=false,drawStart=null,drawCurrent=null;
 const cvImg=new Image();
+
+// ── STEPS ──
 function goStep(s){
   step=s;
   const keys=['upload','scale','detect','result'];
@@ -209,6 +203,31 @@ function goStep(s){
     el.className='step'+(i<cur?' done':i===cur?' active':'');
   });
 }
+
+// ── MODE ──
+function setMode(m){
+  mode=m;
+  document.getElementById('modeAuto').className='mode-btn'+(m==='auto'?' on':'');
+  document.getElementById('modeManual').className='mode-btn'+(m==='manual'?' on':'');
+  document.getElementById('autoPanel').style.display=m==='auto'?'block':'none';
+  document.getElementById('manualPanel').style.display=m==='manual'?'block':'none';
+  drawType=null;
+  updateCanvasCursor();
+}
+function setDrawType(t){
+  drawType=t;
+  const hint=document.getElementById('drawTypeHint');
+  hint.style.display='block';
+  hint.textContent=t==='wall'?'🟠 画像上でドラッグして外壁の範囲を描いてください':'🟢 画像上でドラッグして窓・扉の範囲を描いてください';
+  updateCanvasCursor();
+}
+function updateCanvasCursor(){
+  const cv=document.getElementById('canvas');
+  if(!cv)return;
+  cv.style.cursor=(mode==='manual'&&drawType)?'crosshair':'default';
+}
+
+// ── UPLOAD ──
 function handleUpload(e){
   const file=e.target.files[0];if(!file)return;
   const reader=new FileReader();
@@ -220,7 +239,6 @@ function handleUpload(e){
       c.getContext('2d').drawImage(tmp,0,0);
       const url=c.toDataURL('image/jpeg',0.88);
       imgB64=url.split(',')[1];
-      imgOrigW=tmp.naturalWidth;imgOrigH=tmp.naturalHeight;
       boxes=[];scalePts=[];ppm=null;selBox=null;
       loadCanvas(url);
       goStep('scale');
@@ -233,6 +251,7 @@ function handleUpload(e){
   };
   reader.readAsDataURL(file);
 }
+
 function loadCanvas(url){
   cvImg.onload=()=>{
     const MAX=window.innerWidth>700?Math.min(window.innerWidth-340,1100):window.innerWidth-20;
@@ -242,22 +261,56 @@ function loadCanvas(url){
     cv.height=Math.round(cvImg.naturalHeight*sc);
     cv.style.display='block';
     hide('emptyState');
-    cv.ontouchstart=onTouch;
-    cv.onclick=onClick;
+    bindCanvas(cv);
     draw();
     cv.scrollIntoView({behavior:'smooth',block:'start'});
   };
   cvImg.src=url;
 }
-function onTouch(e){e.preventDefault();const t=e.changedTouches[0];handlePos(t.clientX,t.clientY);}
-function onClick(e){handlePos(e.clientX,e.clientY);}
-function handlePos(cx,cy){
-  const cv=document.getElementById('canvas'),r=cv.getBoundingClientRect();
-  const pcx=(cx-r.left)*(cv.width/r.width);
-  const pcy=(cy-r.top)*(cv.height/r.height);
-  const nx=pcx/cv.width,ny=pcy/cv.height;
+
+function bindCanvas(cv){
+  cv.ontouchstart=onTouchStart;
+  cv.ontouchmove=onTouchMove;
+  cv.ontouchend=onTouchEnd;
+  cv.onmousedown=onMouseDown;
+  cv.onmousemove=onMouseMove;
+  cv.onmouseup=onMouseUp;
+  cv.oncontextmenu=e=>e.preventDefault();
+}
+
+// ── POINTER HELPERS ──
+function cvPos(e,cv){
+  const r=cv.getBoundingClientRect();
+  const cx=e.clientX||e.touches?.[0]?.clientX;
+  const cy=e.clientY||e.touches?.[0]?.clientY;
+  return{
+    pcx:(cx-r.left)*(cv.width/r.width),
+    pcy:(cy-r.top)*(cv.height/r.height),
+    nx:(cx-r.left)/r.width,
+    ny:(cy-r.top)/r.height
+  };
+}
+
+// ── TOUCH EVENTS ──
+function onTouchStart(e){e.preventDefault();const p=cvPos(e,this);handleDown(p,this);}
+function onTouchMove(e){e.preventDefault();const p=cvPos(e,this);handleMove(p);}
+function onTouchEnd(e){e.preventDefault();handleUp();}
+
+// ── MOUSE EVENTS ──
+function onMouseDown(e){const p=cvPos(e,this);handleDown(p,this);}
+function onMouseMove(e){const p=cvPos(e,this);handleMove(p);}
+function onMouseUp(e){handleUp();}
+
+// ── UNIFIED HANDLERS ──
+function handleDown(p,cv){
+  if(mode==='manual'&&drawType){
+    isDrawing=true;
+    drawStart={x:p.pcx,y:p.pcy};
+    drawCurrent={x:p.pcx,y:p.pcy};
+    return;
+  }
   if(step==='scale'){
-    scalePts=scalePts.length>=2?[{cx:pcx,cy:pcy}]:[...scalePts,{cx:pcx,cy:pcy}];
+    scalePts=scalePts.length>=2?[{cx:p.pcx,cy:p.pcy}]:[...scalePts,{cx:p.pcx,cy:p.pcy}];
     setPtUI('ptA',scalePts[0]);setPtUI('ptB',scalePts[1]);
     if(scalePts.length===2){
       const dx=scalePts[1].cx-scalePts[0].cx,dy=scalePts[1].cy-scalePts[0].cy;
@@ -269,8 +322,11 @@ function handlePos(cx,cy){
     draw();return;
   }
   if(step==='result'){
+    const W=cv.width,H=cv.height;
     let found=null;
-    boxes.forEach((b,i)=>{if(nx>=b.cx-b.w/2&&nx<=b.cx+b.w/2&&ny>=b.cy-b.h/2&&ny<=b.cy+b.h/2)found=i;});
+    boxes.forEach((b,i)=>{
+      if(p.nx>=b.cx-b.w/2&&p.nx<=b.cx+b.w/2&&p.ny>=b.cy-b.h/2&&p.ny<=b.cy+b.h/2)found=i;
+    });
     if(found!==null){
       if(selBox===found){boxes[found].type=boxes[found].type==='wall'?'window':'wall';selBox=null;updateResults();}
       else selBox=found;
@@ -278,6 +334,34 @@ function handlePos(cx,cy){
     draw();
   }
 }
+function handleMove(p){
+  if(isDrawing&&drawStart){
+    drawCurrent={x:p.pcx,y:p.pcy};
+    draw();
+  }
+}
+function handleUp(){
+  if(isDrawing&&drawStart&&drawCurrent){
+    const cv=document.getElementById('canvas');
+    const W=cv.width,H=cv.height;
+    const x1=Math.min(drawStart.x,drawCurrent.x),x2=Math.max(drawStart.x,drawCurrent.x);
+    const y1=Math.min(drawStart.y,drawCurrent.y),y2=Math.max(drawStart.y,drawCurrent.y);
+    if(x2-x1>10&&y2-y1>10){
+      boxes.push({
+        id:boxes.length,
+        cx:(x1+x2)/(2*W),cy:(y1+y2)/(2*H),
+        w:(x2-x1)/W,h:(y2-y1)/H,
+        type:drawType,cls:drawType==='wall'?'手動（外壁）':'手動（窓・扉）',conf:1.0
+      });
+      show('resultsSection');
+      updateResults();
+      if(step!=='result')goStep('result');
+    }
+    isDrawing=false;drawStart=null;drawCurrent=null;
+    draw();
+  }
+}
+
 function setPtUI(id,pt){
   const el=document.getElementById(id);
   if(pt){el.textContent=(id==='ptA'?'点A':'点B')+' ✓';el.className='pt-box set';}
@@ -287,18 +371,64 @@ function resetPts(){setPtUI('ptA',null);setPtUI('ptB',null);}
 function resetScale(){
   scalePts=[];ppm=null;resetPts();
   document.getElementById('scaleDone').style.display='none';
-  document.getElementById('ppmInfo').textContent='■壁 − ■窓 = 正味塗装面積';
+  document.getElementById('ppmInfo').textContent='■外壁全体 − ■窓・扉 = 正味塗装面積';
   goStep('scale');draw();
 }
+
+// ── DETECT ──
 async function detect(){
   const key=document.getElementById('apiKey').value.trim();
-  if(!key){setStatus('⚠️ Anthropic API Key（sk-ant-...）を入力してください');return;}
+  if(!key){setStatus('⚠️ Anthropic API Key を入力してください');return;}
   if(!imgB64){setStatus('⚠️ 画像をアップロードしてください');return;}
   if(!ppm){setStatus('⚠️ スケール設定をしてください');return;}
   const btn=document.getElementById('detectBtn');
   btn.disabled=true;show('prog');
-  setStatus('🤖 Claude AIが壁面・窓・扉を解析中...\n（10〜20秒程度かかります）');
-  const prompt='あなたは建物外壁塗装の面積積算の専門家です。この建物の正面または側面写真を解析してください。以下を検出し、各要素のバウンディングボックスをJSON形式で返してください：wall=塗装が必要な外壁面、window=窓（塗装不要）、door=扉・シャッター（塗装不要）。必ず以下のJSON形式のみを返してください（説明文は不要）：{"detections":[{"type":"wall"または"window"または"door","label":"要素名","x_center":0〜1,"y_center":0〜1,"width":0〜1,"height":0〜1}]}。x_center,y_center,width,heightはすべて0〜1の割合。壁面は塗装が必要な部分のみ（基礎・屋根は除く）。JSON以外の文字を含めないこと。';
+  setStatus('🤖 Claude AIが解析中...(15〜30秒)');
+
+  // ★★★ 改良プロンプト ★★★
+  const prompt = `あなたは日本の建物外壁塗装の積算を専門とするエンジニアです。
+添付の建物正面写真を精密に解析してください。
+
+【解析タスク】
+以下の2種類の要素を検出してください：
+
+1. wall（塗装対象の外壁面）
+   - 建物の外壁面全体（ファサード）を面ごとに検出
+   - 1つの壁面（同一平面）は1つのバウンディングボックスで表現
+   - 屋根・基礎・庇・バルコニー床は含めない
+   - 外壁材が見えている部分のみ対象
+
+2. opening（塗装不要の開口部）
+   - 窓ガラス（サッシ含む）
+   - ドア・玄関扉
+   - シャッター・ガレージ扉
+   - 換気口・エアコンスリーブ等の開口
+
+【重要なルール】
+- 外壁面は「大きく1枚」でとらえる（フロア別に分割しない）
+- 窓は1つ1つ個別に検出する（まとめない）
+- バウンディングボックスは実際の要素の輪郭に密着させる
+- 画像の端まで外壁が続く場合は端まで含める
+
+【出力形式】
+JSON形式のみで返答してください（説明文・コードブロック不要）：
+{
+  "scene_description": "写真の概要（例：3階建て鉄骨造商業ビル・正面）",
+  "detections": [
+    {
+      "type": "wall" または "opening",
+      "label": "具体的な名称（例：南面外壁、1階窓、玄関ドア）",
+      "x_center": 画像幅に対する中心X座標の割合（0.0〜1.0）,
+      "y_center": 画像高さに対する中心Y座標の割合（0.0〜1.0）,
+      "width": 画像幅に対する幅の割合（0.0〜1.0）,
+      "height": 画像高さに対する高さの割合（0.0〜1.0）,
+      "notes": "補足情報（オプション）"
+    }
+  ],
+  "total_wall_count": 壁面の数,
+  "total_opening_count": 開口部の数
+}`;
+
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
@@ -310,30 +440,53 @@ async function detect(){
       },
       body:JSON.stringify({
         model:'claude-opus-4-5',
-        max_tokens:2000,
-        messages:[{role:'user',content:[
-          {type:'image',source:{type:'base64',media_type:'image/jpeg',data:imgB64}},
-          {type:'text',text:prompt}
-        ]}]
+        max_tokens:4096,
+        messages:[{
+          role:'user',
+          content:[
+            {type:'image',source:{type:'base64',media_type:'image/jpeg',data:imgB64}},
+            {type:'text',text:prompt}
+          ]
+        }]
       })
     });
-    if(!res.ok){const err=await res.json().catch(()=>({}));throw new Error(err.error?.message||'HTTP '+res.status);}
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||'HTTP '+res.status);}
     const data=await res.json();
     const raw=data.content?.[0]?.text||'';
+    
+    // JSON抽出（コードブロックも考慮）
     const jsonMatch=raw.match(/\{[\s\S]*\}/);
-    if(!jsonMatch)throw new Error('AIレスポンスのパースに失敗しました');
+    if(!jsonMatch)throw new Error('JSONパース失敗。レスポンス: '+raw.slice(0,200));
     const parsed=JSON.parse(jsonMatch[0]);
     const dets=parsed.detections||[];
-    if(dets.length===0)throw new Error('要素が検出されませんでした。別の写真をお試しください');
-    boxes=dets.map((d,i)=>({id:i,cx:d.x_center,cy:d.y_center,w:d.width,h:d.height,type:d.type==='wall'?'wall':'window',cls:d.label||d.type,conf:1.0}));
+    if(dets.length===0)throw new Error('要素が検出されませんでした');
+    
+    // openingをwindowとして扱う
+    boxes=dets.map((d,i)=>({
+      id:i,
+      cx:d.x_center,cy:d.y_center,
+      w:d.width,h:d.height,
+      type:d.type==='wall'?'wall':'window',
+      cls:d.label||d.type,
+      conf:1.0,
+      notes:d.notes||''
+    }));
+    
     const wc=boxes.filter(b=>b.type==='wall').length;
     const gc=boxes.filter(b=>b.type==='window').length;
-    setStatus('✅ 解析完了！'+dets.length+'個を検出\n壁×'+wc+'（オレンジ）　窓/扉×'+gc+'（緑）\nタップ→再タップで壁↔窓を切替できます');
-    goStep('result');show('resultsSection');updateResults();draw();
+    setStatus('✅ 解析完了！\n外壁×'+wc+'面　開口部×'+gc+'箇所\n\n' +
+              (parsed.scene_description?'📷 '+parsed.scene_description+'\n\n':'') +
+              'タップ→再タップで壁↔窓の切替\n手動描画で追加・修正も可能');
+    goStep('result');
+    show('resultsSection');
+    updateResults();
+    draw();
   }catch(err){
-    setStatus('⚠️ エラー：'+err.message+'\n\n・API Keyが正しいか確認\n・画像が大きすぎないか確認');
+    setStatus('⚠️ エラー：'+err.message+'\n\n・API Keyが正しいか確認\n・画像が大きすぎないか確認（5MB以下推奨）');
   }finally{btn.disabled=false;hide('prog');}
 }
+
+// ── RESULTS ──
 function updateResults(){
   const cv=document.getElementById('canvas');
   const W=cv.width,H=cv.height;
@@ -347,49 +500,84 @@ function updateResults(){
   document.getElementById('winVal').textContent=(gt/1e6).toFixed(2)+' m²';
   document.getElementById('winCount').textContent=gb.length+'箇所';
   document.getElementById('netVal').innerHTML=(nt/1e6).toFixed(2)+'<span style="font-size:17px;color:var(--orange);margin-left:5px">m²</span>';
-  document.getElementById('netFormula').textContent='壁 '+(wt/1e6).toFixed(2)+' − 除外 '+(gt/1e6).toFixed(2)+' = '+(nt/1e6).toFixed(2)+' m²';
+  document.getElementById('netFormula').textContent='外壁 '+(wt/1e6).toFixed(2)+' − 開口 '+(gt/1e6).toFixed(2)+' = '+(nt/1e6).toFixed(2)+' m²';
   document.getElementById('boxList').innerHTML=boxes.map((b,i)=>{
     const isW=b.type==='wall',col=isW?'var(--orange)':'var(--green)',isSel=selBox===i;
-    const mm2=b.w*W*b.h*H/(ppm*ppm);
-    return '<div class="box-item'+(isSel?' selected':'')+'" onclick="clickBox('+i+')"><div class="box-left"><div class="dot" style="background:'+col+'"></div><span class="box-name" style="color:'+col+'">'+(isW?'壁面':'窓/扉')+'</span><span class="box-cls">'+b.cls+'</span></div><span class="box-m2" style="color:'+col+'">'+(mm2/1e6).toFixed(2)+'m²</span></div>';
+    const mm2=ppm?b.w*W*b.h*H/(ppm*ppm):0;
+    return '<div class="box-item'+(isSel?' selected':'')+'" onclick="clickBox('+i+')" oncontextmenu="deleteBox('+i+',event)">'+
+      '<div class="box-left">'+
+        '<div class="dot" style="background:'+col+'"></div>'+
+        '<span class="box-name" style="color:'+col+'">'+(isW?'外壁':'開口部')+'</span>'+
+        '<span class="box-cls">'+b.cls+'</span>'+
+      '</div>'+
+      '<span class="box-m2" style="color:'+col+'">'+(ppm?(mm2/1e6).toFixed(2)+'m²':'—')+'</span>'+
+    '</div>';
   }).join('');
 }
+
 function clickBox(i){
   if(selBox===i){boxes[i].type=boxes[i].type==='wall'?'window':'wall';selBox=null;updateResults();}
   else selBox=i;
   draw();
 }
+function deleteBox(i,e){
+  e.preventDefault();
+  if(confirm('この要素を削除しますか？')){
+    boxes.splice(i,1);
+    boxes.forEach((b,j)=>b.id=j);
+    selBox=null;
+    updateResults();draw();
+  }
+}
+
+// ── DRAW ──
 function draw(){
   const cv=document.getElementById('canvas');if(!cv||!cvImg.src)return;
   const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
   ctx.clearRect(0,0,W,H);ctx.drawImage(cvImg,0,0,W,H);
+
+  // boxes
   boxes.forEach((b,i)=>{
     const isW=b.type==='wall',isSel=selBox===i,col=isW?'#FF6B2B':'#22c55e';
     const x=(b.cx-b.w/2)*W,y=(b.cy-b.h/2)*H,bw=b.w*W,bh=b.h*H;
-    ctx.fillStyle=isW?(isSel?'rgba(255,107,43,.45)':'rgba(255,107,43,.2)'):(isSel?'rgba(34,197,94,.45)':'rgba(34,197,94,.18)');
+    ctx.fillStyle=isW?(isSel?'rgba(255,107,43,.45)':'rgba(255,107,43,.18)'):(isSel?'rgba(34,197,94,.45)':'rgba(34,197,94,.18)');
     ctx.fillRect(x,y,bw,bh);
     ctx.strokeStyle=isSel?'#fff':col;ctx.lineWidth=isSel?3:2;ctx.setLineDash([]);ctx.strokeRect(x,y,bw,bh);
     if(ppm){
-      const mmW=Math.round(bw/ppm).toLocaleString(),mmH=Math.round(bh/ppm).toLocaleString();
-      const bg=isW?'rgba(160,50,0,.92)':'rgba(10,90,30,.92)';
-      ctx.font='bold 10px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
-      const tw1=ctx.measureText(mmW+'mm').width;
-      ctx.fillStyle=bg;ctx.fillRect(x+bw/2-tw1/2-4,y-16,tw1+8,14);
-      ctx.fillStyle='#fff';ctx.fillText(mmW+'mm',x+bw/2,y-9);
-      ctx.save();ctx.translate(x-8,y+bh/2);ctx.rotate(-Math.PI/2);
-      const tw2=ctx.measureText(mmH+'mm').width;
-      ctx.fillStyle=bg;ctx.fillRect(-tw2/2-4,-7,tw2+8,14);
-      ctx.fillStyle='#fff';ctx.fillText(mmH+'mm',0,0);ctx.restore();
       const mm2=bw*bh/(ppm*ppm);
-      const lbl=(isW?'壁 ':'窓 ')+(mm2/1e6).toFixed(2)+'m²';
+      const lbl=(isW?'外壁 ':'開口 ')+(mm2/1e6).toFixed(2)+'m²';
       ctx.font='bold 11px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
       const tw=ctx.measureText(lbl).width;
       ctx.fillStyle=isW?'rgba(180,60,0,.92)':'rgba(20,100,40,.92)';
-      const bxR=x+bw/2-tw/2-5,byR=y+bh/2-9;
+      const bxR=x+bw/2-tw/2-5,byR=y+10;
       ctx.beginPath();if(ctx.roundRect)ctx.roundRect(bxR,byR,tw+10,18,4);else ctx.rect(bxR,byR,tw+10,18);
-      ctx.fill();ctx.fillStyle='#fff';ctx.fillText(lbl,x+bw/2,y+bh/2);
+      ctx.fill();ctx.fillStyle='#fff';ctx.fillText(lbl,x+bw/2,byR+9);
+      // dimensions
+      const mmW=Math.round(bw/ppm).toLocaleString(),mmH=Math.round(bh/ppm).toLocaleString();
+      const bg=isW?'rgba(160,50,0,.92)':'rgba(10,90,30,.92)';
+      ctx.font='bold 9px Arial';
+      const tw1=ctx.measureText(mmW+'mm').width;
+      ctx.fillStyle=bg;ctx.fillRect(x+bw/2-tw1/2-3,y-15,tw1+6,12);
+      ctx.fillStyle='#fff';ctx.fillText(mmW+'mm',x+bw/2,y-9);
+      ctx.save();ctx.translate(x-7,y+bh/2);ctx.rotate(-Math.PI/2);
+      const tw2=ctx.measureText(mmH+'mm').width;
+      ctx.fillStyle=bg;ctx.fillRect(-tw2/2-3,-6,tw2+6,12);
+      ctx.fillStyle='#fff';ctx.fillText(mmH+'mm',0,0);ctx.restore();
     }
   });
+
+  // drawing preview
+  if(isDrawing&&drawStart&&drawCurrent){
+    const col=drawType==='wall'?'#FF6B2B':'#22c55e';
+    const x=Math.min(drawStart.x,drawCurrent.x),y=Math.min(drawStart.y,drawCurrent.y);
+    const bw=Math.abs(drawCurrent.x-drawStart.x),bh=Math.abs(drawCurrent.y-drawStart.y);
+    ctx.fillStyle=drawType==='wall'?'rgba(255,107,43,.25)':'rgba(34,197,94,.25)';
+    ctx.fillRect(x,y,bw,bh);
+    ctx.strokeStyle=col;ctx.lineWidth=2;ctx.setLineDash([8,4]);ctx.strokeRect(x,y,bw,bh);
+    ctx.setLineDash([]);
+  }
+
+  // scale points
   scalePts.forEach((p,i)=>{
     ctx.beginPath();ctx.arc(p.cx,p.cy,9,0,Math.PI*2);
     ctx.fillStyle='#FFD84D';ctx.fill();
@@ -407,6 +595,7 @@ function draw(){
     ctx.fillStyle='#000';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(ref+'mm',mx,my-19);
   }
 }
+
 function setStatus(msg){show('statusBox');document.getElementById('statusBox').textContent=msg;}
 function show(id){document.getElementById(id).style.display='block';}
 function hide(id){document.getElementById(id).style.display='none';}
