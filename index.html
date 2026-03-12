@@ -3,18 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>外壁塗装 積算システム — AI Edition</title>
+<title>外壁塗装 積算システム</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0a0c10;--bg2:#111318;--bg3:#1a1d24;--border:#252830;--border2:#2e3240;--orange:#FF6B2B;--green:#22c55e;--blue:#3B82F6;--text:#E2E4E9;--muted:#6B7280;--muted2:#4B5563}
+:root{--bg:#0a0c10;--bg2:#111318;--bg3:#1a1d24;--border:#252830;--border2:#2e3240;--orange:#FF6B2B;--green:#22c55e;--blue:#3B82F6;--purple:#8B5CF6;--text:#E2E4E9;--muted:#6B7280;--muted2:#4B5563}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
 .header{display:flex;align-items:center;gap:12px;padding:10px 16px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
 .logo{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--orange),#c94400);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
-.title-wrap{flex:1}.title-wrap h1{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;letter-spacing:.03em}
+.title-wrap{flex:1}.title-wrap h1{font-family:'Syne',sans-serif;font-size:15px;font-weight:800}
 .title-wrap p{font-size:10px;color:var(--muted);margin-top:1px}
-.ai-badge{padding:4px 10px;border-radius:20px;background:linear-gradient(135deg,#1a1f35,#0f1525);border:1px solid #2a3060;font-size:10px;font-weight:700;color:#60a5fa;letter-spacing:.05em}
+.badge{padding:4px 10px;border-radius:20px;background:#1a0d2e;border:1px solid #3d1f6e;font-size:10px;font-weight:700;color:#c084fc}
 .steps{display:flex;overflow-x:auto;background:var(--bg2);border-bottom:1px solid var(--border);scrollbar-width:none}
 .steps::-webkit-scrollbar{display:none}
 .step{display:flex;align-items:center;gap:6px;padding:8px 14px;font-size:11px;font-weight:700;color:var(--muted2);white-space:nowrap;flex-shrink:0;border-bottom:2px solid transparent;transition:all .2s}
@@ -22,581 +22,720 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto S
 .step.active{color:var(--orange);border-bottom-color:var(--orange)}.step.active .num{background:var(--orange);color:#fff}
 .step.done{color:var(--green)}.step.done .num{background:var(--green);color:#fff}
 .layout{display:flex;height:calc(100vh - 93px)}
-.panel{width:300px;min-width:300px;background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.panel{width:290px;min-width:290px;background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto}
 .canvas-area{flex:1;background:var(--bg);overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:16px}
-.section{padding:14px;border-bottom:1px solid var(--border)}
-.section-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:10px}
-.field-label{font-size:10px;color:var(--muted);font-weight:700;margin-bottom:5px}
-input[type=text],input[type=password],input[type=number]{width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:13px;font-family:inherit;outline:none;-webkit-appearance:none;transition:border .2s}
-input:focus{border-color:var(--blue)}
-.hint{margin-top:5px;padding:8px 10px;border-radius:6px;background:#1a1000;border:1px solid rgba(255,107,43,.25);font-size:10px;color:#FFB07A;line-height:1.7}
+.sec{padding:14px;border-bottom:1px solid var(--border)}
+.sec-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:10px}
+input[type=number],input[type=password],input[type=text]{width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:13px;font-family:inherit;outline:none;-webkit-appearance:none;transition:border .2s}
+input[type=number]:focus,input[type=password]:focus,input[type=text]:focus{border-color:var(--blue)}
+input[type=range]{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:var(--border2);cursor:pointer;margin:6px 0;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--orange);cursor:pointer}
 .upload-zone{padding:18px 12px;border-radius:10px;border:2px dashed var(--border2);cursor:pointer;text-align:center;color:var(--muted);font-size:13px;transition:all .2s;display:block}
 .upload-zone:hover{border-color:var(--orange);color:var(--orange)}
+/* AI detect button */
+.ai-btn{width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#4f1d96,#7c3aed);color:#fff;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;position:relative;overflow:hidden}
+.ai-btn:hover{background:linear-gradient(135deg,#5b21b6,#8b5cf6);transform:translateY(-1px)}
+.ai-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.ai-btn .sparkle{font-size:16px}
+.ai-progress{display:none;padding:10px 12px;border-radius:8px;background:#1a0d2e;border:1px solid #3d1f6e;font-size:11px;color:#c084fc;text-align:center;margin-top:8px;line-height:1.8}
+.ai-progress .dot{animation:blink 1s infinite;display:inline-block}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.ai-result{display:none;padding:10px 12px;border-radius:8px;background:#0a2015;border:1px solid rgba(34,197,94,.3);font-size:11px;color:#4ade80;margin-top:8px}
+.ai-error{display:none;padding:10px 12px;border-radius:8px;background:#1a0000;border:1px solid rgba(239,68,68,.3);font-size:11px;color:#f87171;margin-top:8px}
+/* scale */
 .scale-pts{display:flex;gap:6px;margin-top:8px}
 .pt-box{flex:1;text-align:center;padding:7px 6px;border-radius:7px;border:1px solid var(--border2);background:var(--bg3);font-size:11px;color:var(--muted2);transition:all .2s}
 .pt-box.set{border-color:var(--green);color:var(--green);background:#0a2015}
 .scale-done{display:none;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:8px;background:#0a2015;border:1px solid rgba(34,197,94,.3);font-size:12px;color:var(--green);margin-top:6px}
 .reset-btn{background:none;border:none;cursor:pointer;font-size:11px;color:var(--muted);text-decoration:underline;font-family:inherit;padding:2px 4px}
-/* mode toggle */
-.mode-wrap{display:flex;gap:6px;margin-bottom:10px}
-.mode-btn{flex:1;padding:8px 6px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted);font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .2s;text-align:center}
-.mode-btn.on{background:#1c3a6e;border-color:var(--blue);color:#60a5fa}
-.mode-btn.on-orange{background:#2a1000;border-color:var(--orange);color:var(--orange)}
-.detect-btn{width:100%;padding:13px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--orange),#c94400);color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .2s;box-shadow:0 4px 20px rgba(255,107,43,.35)}
-.detect-btn:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(255,107,43,.5)}
-.detect-btn:disabled{background:var(--bg3);color:var(--muted2);box-shadow:none;cursor:not-allowed;transform:none}
-.progress{height:2px;border-radius:1px;background:var(--border);overflow:hidden;margin-top:8px;display:none}
-.progress-bar{height:100%;width:40%;background:linear-gradient(90deg,transparent,var(--orange),transparent);animation:slide 1.5s infinite}
-@keyframes slide{0%{transform:translateX(-150%)}100%{transform:translateX(400%)}}
-.status{padding:10px 12px;border-radius:8px;background:var(--bg3);border:1px solid var(--border2);font-size:11px;color:var(--muted);line-height:1.8;white-space:pre-line;display:none}
-.result-cards{display:flex;gap:6px;margin-bottom:10px}
-.rcard{flex:1;padding:10px;border-radius:9px;background:var(--bg3);border:1px solid var(--border2)}
-.rcard-label{font-size:9px;color:var(--muted);font-weight:700;margin-bottom:3px}
-.rcard-val{font-size:18px;font-weight:800;line-height:1}
-.rcard-sub{font-size:9px;color:var(--muted);margin-top:2px}
+.type-toggle{display:flex;gap:6px;margin-bottom:10px}
+.type-btn{flex:1;padding:10px 8px;border-radius:9px;border:2px solid var(--border2);background:var(--bg3);color:var(--muted);font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .2s;text-align:center}
+.type-btn.wall-on{background:#2a1000;border-color:var(--orange);color:var(--orange);box-shadow:0 0 10px rgba(255,107,43,.3)}
+.type-btn.win-on{background:#0a2015;border-color:var(--green);color:var(--green);box-shadow:0 0 10px rgba(34,197,94,.3)}
+.tol-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.tol-val{font-size:12px;font-weight:700;color:var(--orange)}
+.hint-box{padding:8px 10px;border-radius:8px;background:var(--bg3);border:1px solid var(--border2);font-size:11px;color:var(--muted);line-height:1.8}
+.action-row{display:flex;gap:6px;margin-top:10px}
+.act-btn{flex:1;padding:8px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted);font-size:11px;font-weight:700;font-family:inherit;cursor:pointer;transition:all .2s;text-align:center}
+.act-btn:hover{border-color:var(--border);color:var(--text)}
+.act-btn.danger:hover{border-color:#ef4444;color:#ef4444}
 .net-box{padding:14px;border-radius:10px;background:linear-gradient(135deg,#1c0800,#2a1000);border:2px solid rgba(255,107,43,.5);margin-bottom:12px}
 .net-label{font-size:10px;color:#FFB07A;font-weight:700;margin-bottom:4px}
 .net-val{font-family:'Syne',sans-serif;font-size:38px;font-weight:800;color:#fff;line-height:1}
 .net-formula{font-size:10px;color:var(--muted);margin-top:6px}
-.box-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:7px;background:var(--bg3);border:1px solid var(--border2);margin-bottom:3px;cursor:pointer;transition:all .15s}
-.box-item.selected{border-color:var(--orange)}
-.box-left{display:flex;align-items:center;gap:7px}
-.dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
-.box-name{font-size:11px;font-weight:600}
-.box-cls{font-size:10px;color:var(--muted);margin-left:4px;font-weight:400}
-.box-m2{font-size:11px;font-weight:700}
-.help{padding:14px;border-radius:10px;background:var(--bg3);border:1px solid var(--border2);font-size:11px;color:var(--muted);line-height:2.1}
-.help strong{color:var(--text);font-weight:700}
+.rcards{display:flex;gap:6px;margin-bottom:10px}
+.rcard{flex:1;padding:10px;border-radius:9px;background:var(--bg3);border:1px solid var(--border2)}
+.rcard-label{font-size:9px;color:var(--muted);font-weight:700;margin-bottom:3px}
+.rcard-val{font-size:18px;font-weight:800;line-height:1}
+.rcard-sub{font-size:9px;color:var(--muted);margin-top:2px}
+.region-item{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:7px;background:var(--bg3);border:1px solid var(--border2);margin-bottom:3px}
+.del-btn{background:none;border:none;cursor:pointer;color:var(--muted2);font-size:14px;padding:2px 6px;font-family:inherit}
+.del-btn:hover{color:#ef4444}
 .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:400px;gap:14px;width:100%;text-align:center}
-.empty-legend{padding:12px 18px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);font-size:11px;line-height:2.3;color:var(--muted)}
+.proc{display:none;padding:8px 12px;border-radius:8px;background:#1a1f35;border:1px solid #2a3060;font-size:11px;color:#60a5fa;text-align:center;margin-top:8px}
+.param-group{background:var(--bg3);border-radius:8px;padding:10px;border:1px solid var(--border2);margin-bottom:8px}
+.param-label{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.building-mask-badge{display:none;padding:6px 10px;border-radius:7px;background:#1a0d2e;border:1px solid #5b21b6;font-size:10px;color:#c084fc;margin-top:8px;text-align:center}
 @media(max-width:700px){.layout{flex-direction:column;height:auto}.panel{width:100%;min-width:unset;border-right:none;border-bottom:1px solid var(--border)}.canvas-area{min-height:60vw;padding:8px}body{overflow-y:auto}}
+.canvas-wrap{position:relative;display:inline-block}
 canvas{border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.8);display:block;touch-action:none;max-width:100%;user-select:none}
+#overlayCanvas{position:absolute;top:0;left:0;border-radius:10px;pointer-events:none}
+#buildingCanvas{position:absolute;top:0;left:0;border-radius:10px;pointer-events:none}
+#selectCanvas{position:absolute;top:0;left:0;border-radius:10px;pointer-events:none}
 </style>
 </head>
 <body>
 <div class="header">
-  <div class="logo">🏢</div>
+  <div class="logo">&#x1F3E2;</div>
   <div class="title-wrap">
     <h1>外壁塗装 積算システム</h1>
-    <p id="ppmInfo">■外壁全体 − ■窓・扉 = 正味塗装面積</p>
+    <p id="ppmInfo">AI建物検出 ＋ スマート選択</p>
   </div>
-  <div class="ai-badge">Claude AI</div>
+  <div class="badge">✨ AI DETECT</div>
 </div>
 <div class="steps">
   <div class="step active" id="s1"><span class="num">1</span>画像アップ</div>
-  <div class="step" id="s2"><span class="num">2</span>スケール設定</div>
-  <div class="step" id="s3"><span class="num">3</span>AI解析</div>
-  <div class="step" id="s4"><span class="num">4</span>結果</div>
+  <div class="step" id="s2"><span class="num">2</span>AI建物検出</div>
+  <div class="step" id="s3"><span class="num">3</span>スケール設定</div>
+  <div class="step" id="s4"><span class="num">4</span>領域選択</div>
+  <div class="step" id="s5"><span class="num">5</span>結果</div>
 </div>
 <div class="layout">
   <div class="panel">
-    <div class="section">
-      <div class="section-title">Anthropic API Key</div>
-      <input type="password" id="apiKey" placeholder="sk-ant-...">
-      <div class="hint">🔑 <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:#FF8C50">console.anthropic.com</a> → API Keys → Create Key</div>
-    </div>
-    <div class="section">
-      <div class="section-title">建物画像（正面写真）</div>
+    <!-- STEP 1: Upload -->
+    <div class="sec">
+      <div class="sec-title">建物画像（正面写真）</div>
       <label class="upload-zone">
-        📷 タップして画像を選択
-        <div style="font-size:11px;color:var(--muted2);margin-top:3px">正面から撮影した写真を使用</div>
+        📷 画像を選択
+        <div style="font-size:11px;color:var(--muted2);margin-top:3px">建物の写真をアップ</div>
         <input type="file" accept="image/*" capture="environment" onchange="handleUpload(event)" style="display:none">
       </label>
     </div>
-    <div class="section" id="scaleSection" style="display:none">
-      <div class="section-title">スケール設定</div>
-      <div class="field-label">基準長さ（mm）</div>
+
+    <!-- STEP 2: AI Detect -->
+    <div class="sec" id="aiSec" style="display:none">
+      <div class="sec-title">✨ AI建物検出</div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:5px">🔑 Anthropic APIキー</div>
+        <input type="password" id="apiKeyInput" placeholder="sk-ant-..." style="font-size:12px;letter-spacing:.05em" autocomplete="off">
+        <div style="font-size:9px;color:var(--muted2);margin-top:4px;line-height:1.7">
+          <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:#a78bfa">console.anthropic.com</a> で取得<br>
+          ※キーはこのデバイス外に送信されません
+        </div>
+      </div>
+      <button class="ai-btn" id="aiBtn" onclick="runAIDetect()">
+        <span class="sparkle">🤖</span>
+        AIで建物を自動検出
+      </button>
+      <div class="ai-progress" id="aiProgress">
+        <div>Claude AIが建物を解析中<span class="dot">...</span></div>
+        <div style="margin-top:3px;font-size:10px;color:#a78bfa">写真から建物の輪郭を検出しています</div>
+      </div>
+      <div class="ai-result" id="aiResult"></div>
+      <div class="ai-error" id="aiError"></div>
+      <div class="building-mask-badge" id="maskBadge">🏠 建物マスク適用中 — 建物の外はクリックできません</div>
+      <div style="margin-top:10px;padding:8px 10px;border-radius:8px;background:var(--bg3);border:1px solid var(--border2);font-size:10px;color:var(--muted);line-height:1.8">
+        💡 AIが建物の輪郭を検出し、<br>
+        <b>建物の外側をクリックできないよう</b><br>
+        自動でマスクを設定します
+      </div>
+    </div>
+
+    <!-- 感度パラメータ -->
+    <div class="sec" id="paramSec" style="display:none">
+      <div class="sec-title">検出パラメータ</div>
+      <div class="param-group">
+        <div class="param-label">🔍 境界の強さ（エッジ検出）</div>
+        <div class="tol-row">
+          <span style="font-size:10px;color:var(--muted)">弱い→広がりやすい</span>
+          <span class="tol-val" id="edgeVal">35</span>
+        </div>
+        <input type="range" id="edgeSlider" min="5" max="100" value="35" oninput="onParamChange()">
+      </div>
+      <div class="param-group">
+        <div class="param-label">🎨 色の許容範囲（フラッドフィル）</div>
+        <div class="tol-row">
+          <span style="font-size:10px;color:var(--muted)">小さい→同じ色のみ</span>
+          <span class="tol-val" id="tolVal">25</span>
+        </div>
+        <input type="range" id="tolSlider" min="5" max="80" value="25" oninput="onParamChange()">
+      </div>
+    </div>
+
+    <!-- STEP 3: Scale -->
+    <div class="sec" id="scaleSection" style="display:none">
+      <div class="sec-title">スケール設定</div>
+      <div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:5px">基準長さ（mm）</div>
       <input type="number" id="refMm" value="2730" inputmode="numeric" style="margin-bottom:8px">
-      <div style="font-size:10px;color:var(--muted);margin-bottom:8px">実寸が分かる箇所（扉高2730mm等）をA→Bでタップ</div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:8px">実寸が分かる箇所でA→Bをタップ</div>
       <div class="scale-pts">
         <div class="pt-box" id="ptA">点A —</div>
         <div class="pt-box" id="ptB">点B —</div>
       </div>
       <div class="scale-done" id="scaleDone">
-        <span>✓ スケール設定完了</span>
+        <span>✓ 設定完了</span>
         <button class="reset-btn" onclick="resetScale()">再設定</button>
       </div>
     </div>
-    <div class="section" id="detectSection" style="display:none">
-      <div class="section-title">AI解析モード</div>
-      <div class="mode-wrap">
-        <div class="mode-btn on" id="modeAuto" onclick="setMode('auto')">🤖 自動解析</div>
-        <div class="mode-btn" id="modeManual" onclick="setMode('manual')">✏️ 手動描画</div>
+
+    <!-- STEP 4: Select -->
+    <div class="sec" id="selectSec" style="display:none">
+      <div class="sec-title">領域選択</div>
+      <div class="type-toggle">
+        <button class="type-btn wall-on" id="typeWall" onclick="setType('wall')">🟠 外壁</button>
+        <button class="type-btn" id="typeWin" onclick="setType('window')">🟢 窓・扉</button>
       </div>
-      <div id="autoPanel">
-        <button class="detect-btn" id="detectBtn" onclick="detect()">✦ Claude AIで壁面を解析</button>
-        <div class="progress" id="prog"><div class="progress-bar"></div></div>
-        <div class="status" id="statusBox"></div>
-      </div>
-      <div id="manualPanel" style="display:none">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.8">
-          画像上でドラッグして矩形を描きます<br>
-          描画後にタイプを選択してください
-        </div>
-        <div style="display:flex;gap:6px;margin-bottom:8px">
-          <button onclick="setDrawType('wall')" id="drawWallBtn" style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--orange);background:#2a1000;color:var(--orange);font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">＋ 壁面を追加</button>
-          <button onclick="setDrawType('window')" id="drawWinBtn" style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--green);background:#0a2015;color:var(--green);font-size:12px;font-weight:700;font-family:inherit;cursor:pointer">＋ 窓・扉を追加</button>
-        </div>
-        <div id="drawTypeHint" style="font-size:10px;color:var(--muted);padding:6px 8px;background:var(--bg3);border-radius:6px;display:none"></div>
+      <div class="hint-box" id="clickHint">🟠 <b>外壁</b>モード<br>外壁の中心をタップ</div>
+      <div class="proc" id="fillProc">解析中...</div>
+      <div class="action-row">
+        <button class="act-btn" onclick="undoLast()">↩ 戻す</button>
+        <button class="act-btn danger" onclick="clearAll()">🗑 全消去</button>
       </div>
     </div>
-    <div class="section" id="resultsSection" style="display:none">
-      <div class="section-title">計測結果</div>
+
+    <!-- STEP 5: Result -->
+    <div class="sec" id="resultSec" style="display:none">
+      <div class="sec-title">計測結果</div>
       <div class="net-box">
         <div class="net-label">✅ 除外後 塗装面積</div>
         <div class="net-val" id="netVal">—</div>
         <div class="net-formula" id="netFormula"></div>
       </div>
-      <div class="result-cards">
+      <div class="rcards">
         <div class="rcard">
-          <div class="rcard-label" style="color:#FF8C50">■ 外壁（計測）</div>
+          <div class="rcard-label" style="color:#FF8C50">■ 外壁</div>
           <div class="rcard-val" id="wallVal" style="color:var(--orange)">—</div>
           <div class="rcard-sub" id="wallCount"></div>
         </div>
         <div class="rcard">
-          <div class="rcard-label" style="color:#4ade80">■ 窓/扉（除外）</div>
+          <div class="rcard-label" style="color:#4ade80">■ 窓/扉</div>
           <div class="rcard-val" id="winVal" style="color:var(--green)">—</div>
           <div class="rcard-sub" id="winCount"></div>
         </div>
       </div>
-      <div class="section-title" style="margin-top:4px">検出一覧 <span style="font-weight:400;text-transform:none;color:var(--muted2)">(タップで壁↔窓切替・長押しで削除)</span></div>
-      <div id="boxList"></div>
+      <div class="sec-title" style="margin-top:4px">選択領域</div>
+      <div id="regionList"></div>
     </div>
-    <div class="section">
-      <div class="help">
-        <div style="font-weight:700;color:var(--text);margin-bottom:6px">📖 使い方</div>
-        <div>① API Keyを入力</div>
-        <div>② <strong>正面から撮影した写真</strong>をアップ</div>
-        <div>③ 実寸が分かる箇所でA→Bをタップ</div>
-        <div>④ <strong>Claude AIで解析</strong>を押す</div>
-        <div>⑤ 誤検出はタップで壁↔窓を切替</div>
-        <div>⑥ 手動描画で追加・修正も可能</div>
+
+    <div class="sec">
+      <div style="font-size:10px;color:var(--muted);line-height:2.2">
+        <div style="font-weight:700;color:var(--text);margin-bottom:4px">📖 使い方</div>
+        <div>① 正面写真をアップ</div>
+        <div>② AI建物検出ボタンをタップ</div>
+        <div>③ スケール設定（A→B）</div>
+        <div>④ 外壁の中心をタップ</div>
+        <div>⑤ 窓・扉をタップ</div>
+        <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border2);color:#c084fc">
+          ✨ <b>AI DETECT</b>方式<br>
+          Claude AIが建物を自動認識<br>
+          建物の外には選択不可
+        </div>
       </div>
     </div>
   </div>
-  <div class="canvas-area">
+
+  <div class="canvas-area" id="canvasArea">
     <div class="empty" id="emptyState">
       <div style="font-size:56px">🏠</div>
       <div style="font-size:15px;font-weight:700;color:var(--muted)">建物の正面写真をアップロード</div>
-      <div class="empty-legend">
-        <div><span style="color:var(--orange);font-weight:700">■ オレンジ</span>　外壁面 → 計測面積に加算</div>
-        <div><span style="color:var(--green);font-weight:700">■ 緑</span>　　　　窓・扉 → 計測面積から除外</div>
+      <div style="padding:12px 18px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);font-size:11px;line-height:2.3;color:var(--muted);text-align:center">
+        <div style="color:#c084fc;font-weight:700;margin-bottom:4px">✨ AI DETECT方式</div>
+        <div>Claude AIが写真から建物を自動検出</div>
+        <div>建物の外には選択できないようマスク</div>
+        <div style="margin-top:8px"><span style="color:var(--orange);font-weight:700">■</span> 外壁 → 面積加算　　<span style="color:var(--green);font-weight:700">■</span> 窓・扉 → 面積除外</div>
       </div>
     </div>
-    <canvas id="canvas" style="display:none"></canvas>
+    <div class="canvas-wrap" id="canvasWrap" style="display:none">
+      <canvas id="mainCanvas"></canvas>
+      <canvas id="overlayCanvas"></canvas>
+      <canvas id="buildingCanvas"></canvas>
+      <canvas id="selectCanvas"></canvas>
+    </div>
   </div>
 </div>
 
 <script>
-let scalePts=[],ppm=null,imgB64=null;
-let boxes=[],selBox=null,step='upload';
-let mode='auto',drawType=null,isDrawing=false,drawStart=null,drawCurrent=null;
-const cvImg=new Image();
+var step='upload', drawType='wall', tolerance=25, edgeSens=35;
+var scalePts=[], ppm=null;
+var regions=[];
+var origImgData=null;
+var edgeMap=null;
+// Building mask: 1=inside building, 0=outside
+var buildingMask=null;
+var buildingPolygon=null;
+var base64Image=null; // for AI
 
-// ── STEPS ──
 function goStep(s){
   step=s;
-  const keys=['upload','scale','detect','result'];
-  const cur=keys.indexOf(s);
-  keys.forEach((k,i)=>{
-    const el=document.getElementById('s'+(i+1));
+  var keys=['upload','ai','scale','select','result'];
+  var cur=keys.indexOf(s);
+  keys.forEach(function(k,i){
+    var el=document.getElementById('s'+(i+1));
     el.className='step'+(i<cur?' done':i===cur?' active':'');
   });
 }
-
-// ── MODE ──
-function setMode(m){
-  mode=m;
-  document.getElementById('modeAuto').className='mode-btn'+(m==='auto'?' on':'');
-  document.getElementById('modeManual').className='mode-btn'+(m==='manual'?' on':'');
-  document.getElementById('autoPanel').style.display=m==='auto'?'block':'none';
-  document.getElementById('manualPanel').style.display=m==='manual'?'block':'none';
-  drawType=null;
-  updateCanvasCursor();
-}
-function setDrawType(t){
+function setType(t){
   drawType=t;
-  const hint=document.getElementById('drawTypeHint');
-  hint.style.display='block';
-  hint.textContent=t==='wall'?'🟠 画像上でドラッグして外壁の範囲を描いてください':'🟢 画像上でドラッグして窓・扉の範囲を描いてください';
-  updateCanvasCursor();
+  document.getElementById('typeWall').className='type-btn'+(t==='wall'?' wall-on':'');
+  document.getElementById('typeWin').className='type-btn'+(t==='window'?' win-on':'');
+  document.getElementById('clickHint').innerHTML=t==='wall'
+    ?'🟠 <b>外壁</b>モード<br>外壁の中心をタップ'
+    :'🟢 <b>窓・扉</b>モード<br>窓・扉の中心をタップ';
 }
-function updateCanvasCursor(){
-  const cv=document.getElementById('canvas');
-  if(!cv)return;
-  cv.style.cursor=(mode==='manual'&&drawType)?'crosshair':'default';
-}
-
-// ── UPLOAD ──
-function handleUpload(e){
-  const file=e.target.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    const tmp=new Image();
-    tmp.onload=()=>{
-      const c=document.createElement('canvas');
-      c.width=tmp.naturalWidth;c.height=tmp.naturalHeight;
-      c.getContext('2d').drawImage(tmp,0,0);
-      const url=c.toDataURL('image/jpeg',0.88);
-      imgB64=url.split(',')[1];
-      boxes=[];scalePts=[];ppm=null;selBox=null;
-      loadCanvas(url);
-      goStep('scale');
-      show('scaleSection');
-      document.getElementById('scaleDone').style.display='none';
-      hide('resultsSection');
-      resetPts();
-    };
-    tmp.src=ev.target.result;
-  };
-  reader.readAsDataURL(file);
+function onParamChange(){
+  edgeSens=+document.getElementById('edgeSlider').value;
+  tolerance=+document.getElementById('tolSlider').value;
+  document.getElementById('edgeVal').textContent=edgeSens;
+  document.getElementById('tolVal').textContent=tolerance;
+  if(origImgData) buildEdgeMap();
 }
 
-function loadCanvas(url){
-  cvImg.onload=()=>{
-    const MAX=window.innerWidth>700?Math.min(window.innerWidth-340,1100):window.innerWidth-20;
-    const sc=cvImg.naturalWidth>MAX?MAX/cvImg.naturalWidth:1;
-    const cv=document.getElementById('canvas');
-    cv.width=Math.round(cvImg.naturalWidth*sc);
-    cv.height=Math.round(cvImg.naturalHeight*sc);
-    cv.style.display='block';
-    hide('emptyState');
-    bindCanvas(cv);
-    draw();
-    cv.scrollIntoView({behavior:'smooth',block:'start'});
-  };
-  cvImg.src=url;
-}
+// ── AI BUILDING DETECT ──
+function runAIDetect(){
+  if(!base64Image){alert('画像をアップロードしてください');return;}
+  var btn=document.getElementById('aiBtn');
+  btn.disabled=true;
+  show('aiProgress');
+  hide('aiResult');hide('aiError');
 
-function bindCanvas(cv){
-  cv.ontouchstart=onTouchStart;
-  cv.ontouchmove=onTouchMove;
-  cv.ontouchend=onTouchEnd;
-  cv.onmousedown=onMouseDown;
-  cv.onmousemove=onMouseMove;
-  cv.onmouseup=onMouseUp;
-  cv.oncontextmenu=e=>e.preventDefault();
-}
+  var prompt='この建物の写真を見て、建物（壁・窓・ドアなどを含む建物全体）の外形輪郭を多角形のポリゴンで返してください。\n\n必ず以下のJSON形式のみで返してください（説明文は不要）:\n{"points":[[x1,y1],[x2,y2],[x3,y3],...,[xn,yn]]}\n\nxとyは画像の幅・高さに対する割合（0.0〜1.0）で表してください。建物全体を囲む輪郭を、最低6点・最大30点で表してください。空や地面・木・車などは含めないでください。';
 
-// ── POINTER HELPERS ──
-function cvPos(e,cv){
-  const r=cv.getBoundingClientRect();
-  const cx=e.clientX||e.touches?.[0]?.clientX;
-  const cy=e.clientY||e.touches?.[0]?.clientY;
-  return{
-    pcx:(cx-r.left)*(cv.width/r.width),
-    pcy:(cy-r.top)*(cv.height/r.height),
-    nx:(cx-r.left)/r.width,
-    ny:(cy-r.top)/r.height
-  };
-}
-
-// ── TOUCH EVENTS ──
-function onTouchStart(e){e.preventDefault();const p=cvPos(e,this);handleDown(p,this);}
-function onTouchMove(e){e.preventDefault();const p=cvPos(e,this);handleMove(p);}
-function onTouchEnd(e){e.preventDefault();handleUp();}
-
-// ── MOUSE EVENTS ──
-function onMouseDown(e){const p=cvPos(e,this);handleDown(p,this);}
-function onMouseMove(e){const p=cvPos(e,this);handleMove(p);}
-function onMouseUp(e){handleUp();}
-
-// ── UNIFIED HANDLERS ──
-function handleDown(p,cv){
-  if(mode==='manual'&&drawType){
-    isDrawing=true;
-    drawStart={x:p.pcx,y:p.pcy};
-    drawCurrent={x:p.pcx,y:p.pcy};
+  var apiKey = document.getElementById('apiKeyInput').value.trim().replace(/[^ -~]/g, '');
+  if(!apiKey){
+    hide('aiProgress');
+    btn.disabled=false;
+    document.getElementById('aiError').textContent='APIキーを入力してください。';
+    show('aiError');
     return;
   }
-  if(step==='scale'){
-    scalePts=scalePts.length>=2?[{cx:p.pcx,cy:p.pcy}]:[...scalePts,{cx:p.pcx,cy:p.pcy}];
-    setPtUI('ptA',scalePts[0]);setPtUI('ptB',scalePts[1]);
-    if(scalePts.length===2){
-      const dx=scalePts[1].cx-scalePts[0].cx,dy=scalePts[1].cy-scalePts[0].cy;
-      ppm=Math.sqrt(dx*dx+dy*dy)/+document.getElementById('refMm').value;
-      document.getElementById('scaleDone').style.display='flex';
-      document.getElementById('ppmInfo').textContent='1mm='+ppm.toFixed(3)+'px';
-      show('detectSection');goStep('detect');
+
+  // Check if running from file:// protocol (CORS will fail)
+  if(window.location.protocol === 'file:') {
+    hide('aiProgress');
+    btn.disabled=false;
+    document.getElementById('aiError').innerHTML='⚠️ <b>ファイルを直接開いているため通信できません。</b><br><br>解決方法：<br>① VSCode の「Live Server」拡張でHTTPサーバーから開く<br>② または <code style="background:#2a0a0a;padding:2px 5px;border-radius:4px">python -m http.server 8080</code> を実行して <a href="http://localhost:8080" target="_blank" style="color:#a78bfa">http://localhost:8080</a> で開く';
+    show('aiError');
+    return;
+  }
+
+  fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body:JSON.stringify({
+      model:'claude-sonnet-4-6',
+      max_tokens:1000,
+      messages:[{
+        role:'user',
+        content:[
+          {type:'image',source:{type:'base64',media_type:'image/jpeg',data:base64Image}},
+          {type:'text',text:prompt}
+        ]
+      }]
+    })
+  })
+  .then(function(r){return r.json();})
+  .then(function(data){
+    hide('aiProgress');
+    btn.disabled=false;
+    if(data.error){
+      document.getElementById('aiError').textContent='エラー: '+data.error.message;
+      show('aiError');return;
     }
-    draw();return;
-  }
-  if(step==='result'){
-    const W=cv.width,H=cv.height;
-    let found=null;
-    boxes.forEach((b,i)=>{
-      if(p.nx>=b.cx-b.w/2&&p.nx<=b.cx+b.w/2&&p.ny>=b.cy-b.h/2&&p.ny<=b.cy+b.h/2)found=i;
-    });
-    if(found!==null){
-      if(selBox===found){boxes[found].type=boxes[found].type==='wall'?'window':'wall';selBox=null;updateResults();}
-      else selBox=found;
-    }else selBox=null;
-    draw();
-  }
-}
-function handleMove(p){
-  if(isDrawing&&drawStart){
-    drawCurrent={x:p.pcx,y:p.pcy};
-    draw();
-  }
-}
-function handleUp(){
-  if(isDrawing&&drawStart&&drawCurrent){
-    const cv=document.getElementById('canvas');
-    const W=cv.width,H=cv.height;
-    const x1=Math.min(drawStart.x,drawCurrent.x),x2=Math.max(drawStart.x,drawCurrent.x);
-    const y1=Math.min(drawStart.y,drawCurrent.y),y2=Math.max(drawStart.y,drawCurrent.y);
-    if(x2-x1>10&&y2-y1>10){
-      boxes.push({
-        id:boxes.length,
-        cx:(x1+x2)/(2*W),cy:(y1+y2)/(2*H),
-        w:(x2-x1)/W,h:(y2-y1)/H,
-        type:drawType,cls:drawType==='wall'?'手動（外壁）':'手動（窓・扉）',conf:1.0
-      });
-      show('resultsSection');
-      updateResults();
-      if(step!=='result')goStep('result');
+    var text=data.content.map(function(c){return c.text||'';}).join('');
+    // Extract JSON
+    var match=text.match(/\{[\s\S]*"points"[\s\S]*\}/);
+    if(!match){
+      document.getElementById('aiError').textContent='AIの応答を解析できませんでした。再試行してください。\n応答: '+text.substring(0,200);
+      show('aiError');return;
     }
-    isDrawing=false;drawStart=null;drawCurrent=null;
-    draw();
-  }
-}
-
-function setPtUI(id,pt){
-  const el=document.getElementById(id);
-  if(pt){el.textContent=(id==='ptA'?'点A':'点B')+' ✓';el.className='pt-box set';}
-  else{el.textContent=(id==='ptA'?'点A':'点B')+' —';el.className='pt-box';}
-}
-function resetPts(){setPtUI('ptA',null);setPtUI('ptB',null);}
-function resetScale(){
-  scalePts=[];ppm=null;resetPts();
-  document.getElementById('scaleDone').style.display='none';
-  document.getElementById('ppmInfo').textContent='■外壁全体 − ■窓・扉 = 正味塗装面積';
-  goStep('scale');draw();
-}
-
-// ── DETECT ──
-async function detect(){
-  const key=document.getElementById('apiKey').value.trim();
-  if(!key){setStatus('⚠️ Anthropic API Key を入力してください');return;}
-  if(!imgB64){setStatus('⚠️ 画像をアップロードしてください');return;}
-  if(!ppm){setStatus('⚠️ スケール設定をしてください');return;}
-  const btn=document.getElementById('detectBtn');
-  btn.disabled=true;show('prog');
-  setStatus('🤖 Claude AIが解析中...(15〜30秒)');
-
-  // ★★★ 改良プロンプト ★★★
-  const prompt = `あなたは日本の建物外壁塗装の積算を専門とするエンジニアです。
-添付の建物正面写真を精密に解析してください。
-
-【解析タスク】
-以下の2種類の要素を検出してください：
-
-1. wall（塗装対象の外壁面）
-   - 建物の外壁面全体（ファサード）を面ごとに検出
-   - 1つの壁面（同一平面）は1つのバウンディングボックスで表現
-   - 屋根・基礎・庇・バルコニー床は含めない
-   - 外壁材が見えている部分のみ対象
-
-2. opening（塗装不要の開口部）
-   - 窓ガラス（サッシ含む）
-   - ドア・玄関扉
-   - シャッター・ガレージ扉
-   - 換気口・エアコンスリーブ等の開口
-
-【重要なルール】
-- 外壁面は「大きく1枚」でとらえる（フロア別に分割しない）
-- 窓は1つ1つ個別に検出する（まとめない）
-- バウンディングボックスは実際の要素の輪郭に密着させる
-- 画像の端まで外壁が続く場合は端まで含める
-
-【出力形式】
-JSON形式のみで返答してください（説明文・コードブロック不要）：
-{
-  "scene_description": "写真の概要（例：3階建て鉄骨造商業ビル・正面）",
-  "detections": [
-    {
-      "type": "wall" または "opening",
-      "label": "具体的な名称（例：南面外壁、1階窓、玄関ドア）",
-      "x_center": 画像幅に対する中心X座標の割合（0.0〜1.0）,
-      "y_center": 画像高さに対する中心Y座標の割合（0.0〜1.0）,
-      "width": 画像幅に対する幅の割合（0.0〜1.0）,
-      "height": 画像高さに対する高さの割合（0.0〜1.0）,
-      "notes": "補足情報（オプション）"
+    try{
+      var parsed=JSON.parse(match[0]);
+      if(!parsed.points||parsed.points.length<3){throw new Error('ポイント数不足');}
+      buildingPolygon=parsed.points;
+      applyBuildingMask();
+      var ptCount=parsed.points.length;
+      document.getElementById('aiResult').innerHTML='✅ 建物を検出しました（'+ptCount+'点）<br>建物の外側には選択できません';
+      show('aiResult');
+      show('maskBadge');
+      show('scaleSection');show('paramSec');
+      goStep('scale');
+    }catch(e){
+      document.getElementById('aiError').textContent='解析エラー: '+e.message;
+      show('aiError');
     }
-  ],
-  "total_wall_count": 壁面の数,
-  "total_opening_count": 開口部の数
-}`;
-
-  try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key':key,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
-      body:JSON.stringify({
-        model:'claude-opus-4-5',
-        max_tokens:4096,
-        messages:[{
-          role:'user',
-          content:[
-            {type:'image',source:{type:'base64',media_type:'image/jpeg',data:imgB64}},
-            {type:'text',text:prompt}
-          ]
-        }]
-      })
-    });
-    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||'HTTP '+res.status);}
-    const data=await res.json();
-    const raw=data.content?.[0]?.text||'';
-    
-    // JSON抽出（コードブロックも考慮）
-    const jsonMatch=raw.match(/\{[\s\S]*\}/);
-    if(!jsonMatch)throw new Error('JSONパース失敗。レスポンス: '+raw.slice(0,200));
-    const parsed=JSON.parse(jsonMatch[0]);
-    const dets=parsed.detections||[];
-    if(dets.length===0)throw new Error('要素が検出されませんでした');
-    
-    // openingをwindowとして扱う
-    boxes=dets.map((d,i)=>({
-      id:i,
-      cx:d.x_center,cy:d.y_center,
-      w:d.width,h:d.height,
-      type:d.type==='wall'?'wall':'window',
-      cls:d.label||d.type,
-      conf:1.0,
-      notes:d.notes||''
-    }));
-    
-    const wc=boxes.filter(b=>b.type==='wall').length;
-    const gc=boxes.filter(b=>b.type==='window').length;
-    setStatus('✅ 解析完了！\n外壁×'+wc+'面　開口部×'+gc+'箇所\n\n' +
-              (parsed.scene_description?'📷 '+parsed.scene_description+'\n\n':'') +
-              'タップ→再タップで壁↔窓の切替\n手動描画で追加・修正も可能');
-    goStep('result');
-    show('resultsSection');
-    updateResults();
-    draw();
-  }catch(err){
-    setStatus('⚠️ エラー：'+err.message+'\n\n・API Keyが正しいか確認\n・画像が大きすぎないか確認（5MB以下推奨）');
-  }finally{btn.disabled=false;hide('prog');}
-}
-
-// ── RESULTS ──
-function updateResults(){
-  const cv=document.getElementById('canvas');
-  const W=cv.width,H=cv.height;
-  const wb=boxes.filter(b=>b.type==='wall');
-  const gb=boxes.filter(b=>b.type==='window');
-  const wt=wb.reduce((s,b)=>s+b.w*W*b.h*H/(ppm*ppm),0);
-  const gt=gb.reduce((s,b)=>s+b.w*W*b.h*H/(ppm*ppm),0);
-  const nt=wt-gt;
-  document.getElementById('wallVal').textContent=(wt/1e6).toFixed(2)+' m²';
-  document.getElementById('wallCount').textContent=wb.length+'面';
-  document.getElementById('winVal').textContent=(gt/1e6).toFixed(2)+' m²';
-  document.getElementById('winCount').textContent=gb.length+'箇所';
-  document.getElementById('netVal').innerHTML=(nt/1e6).toFixed(2)+'<span style="font-size:17px;color:var(--orange);margin-left:5px">m²</span>';
-  document.getElementById('netFormula').textContent='外壁 '+(wt/1e6).toFixed(2)+' − 開口 '+(gt/1e6).toFixed(2)+' = '+(nt/1e6).toFixed(2)+' m²';
-  document.getElementById('boxList').innerHTML=boxes.map((b,i)=>{
-    const isW=b.type==='wall',col=isW?'var(--orange)':'var(--green)',isSel=selBox===i;
-    const mm2=ppm?b.w*W*b.h*H/(ppm*ppm):0;
-    return '<div class="box-item'+(isSel?' selected':'')+'" onclick="clickBox('+i+')" oncontextmenu="deleteBox('+i+',event)">'+
-      '<div class="box-left">'+
-        '<div class="dot" style="background:'+col+'"></div>'+
-        '<span class="box-name" style="color:'+col+'">'+(isW?'外壁':'開口部')+'</span>'+
-        '<span class="box-cls">'+b.cls+'</span>'+
-      '</div>'+
-      '<span class="box-m2" style="color:'+col+'">'+(ppm?(mm2/1e6).toFixed(2)+'m²':'—')+'</span>'+
-    '</div>';
-  }).join('');
-}
-
-function clickBox(i){
-  if(selBox===i){boxes[i].type=boxes[i].type==='wall'?'window':'wall';selBox=null;updateResults();}
-  else selBox=i;
-  draw();
-}
-function deleteBox(i,e){
-  e.preventDefault();
-  if(confirm('この要素を削除しますか？')){
-    boxes.splice(i,1);
-    boxes.forEach((b,j)=>b.id=j);
-    selBox=null;
-    updateResults();draw();
-  }
-}
-
-// ── DRAW ──
-function draw(){
-  const cv=document.getElementById('canvas');if(!cv||!cvImg.src)return;
-  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
-  ctx.clearRect(0,0,W,H);ctx.drawImage(cvImg,0,0,W,H);
-
-  // boxes
-  boxes.forEach((b,i)=>{
-    const isW=b.type==='wall',isSel=selBox===i,col=isW?'#FF6B2B':'#22c55e';
-    const x=(b.cx-b.w/2)*W,y=(b.cy-b.h/2)*H,bw=b.w*W,bh=b.h*H;
-    ctx.fillStyle=isW?(isSel?'rgba(255,107,43,.45)':'rgba(255,107,43,.18)'):(isSel?'rgba(34,197,94,.45)':'rgba(34,197,94,.18)');
-    ctx.fillRect(x,y,bw,bh);
-    ctx.strokeStyle=isSel?'#fff':col;ctx.lineWidth=isSel?3:2;ctx.setLineDash([]);ctx.strokeRect(x,y,bw,bh);
-    if(ppm){
-      const mm2=bw*bh/(ppm*ppm);
-      const lbl=(isW?'外壁 ':'開口 ')+(mm2/1e6).toFixed(2)+'m²';
-      ctx.font='bold 11px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
-      const tw=ctx.measureText(lbl).width;
-      ctx.fillStyle=isW?'rgba(180,60,0,.92)':'rgba(20,100,40,.92)';
-      const bxR=x+bw/2-tw/2-5,byR=y+10;
-      ctx.beginPath();if(ctx.roundRect)ctx.roundRect(bxR,byR,tw+10,18,4);else ctx.rect(bxR,byR,tw+10,18);
-      ctx.fill();ctx.fillStyle='#fff';ctx.fillText(lbl,x+bw/2,byR+9);
-      // dimensions
-      const mmW=Math.round(bw/ppm).toLocaleString(),mmH=Math.round(bh/ppm).toLocaleString();
-      const bg=isW?'rgba(160,50,0,.92)':'rgba(10,90,30,.92)';
-      ctx.font='bold 9px Arial';
-      const tw1=ctx.measureText(mmW+'mm').width;
-      ctx.fillStyle=bg;ctx.fillRect(x+bw/2-tw1/2-3,y-15,tw1+6,12);
-      ctx.fillStyle='#fff';ctx.fillText(mmW+'mm',x+bw/2,y-9);
-      ctx.save();ctx.translate(x-7,y+bh/2);ctx.rotate(-Math.PI/2);
-      const tw2=ctx.measureText(mmH+'mm').width;
-      ctx.fillStyle=bg;ctx.fillRect(-tw2/2-3,-6,tw2+6,12);
-      ctx.fillStyle='#fff';ctx.fillText(mmH+'mm',0,0);ctx.restore();
+  })
+  .catch(function(e){
+    hide('aiProgress');
+    btn.disabled=false;
+    var msg='通信エラー: '+e.message;
+    if(e.message==='Failed to fetch'){
+      msg='通信エラー: APIへの接続がブロックされました。<br>・APIキーを確認してください<br>・ブラウザの拡張機能（広告ブロッカー等）を無効にしてみてください<br>・HTTPサーバー経由で開いているか確認してください';
     }
+    document.getElementById('aiError').innerHTML=msg;
+    show('aiError');
   });
+}
 
-  // drawing preview
-  if(isDrawing&&drawStart&&drawCurrent){
-    const col=drawType==='wall'?'#FF6B2B':'#22c55e';
-    const x=Math.min(drawStart.x,drawCurrent.x),y=Math.min(drawStart.y,drawCurrent.y);
-    const bw=Math.abs(drawCurrent.x-drawStart.x),bh=Math.abs(drawCurrent.y-drawStart.y);
-    ctx.fillStyle=drawType==='wall'?'rgba(255,107,43,.25)':'rgba(34,197,94,.25)';
-    ctx.fillRect(x,y,bw,bh);
-    ctx.strokeStyle=col;ctx.lineWidth=2;ctx.setLineDash([8,4]);ctx.strokeRect(x,y,bw,bh);
-    ctx.setLineDash([]);
+// ── BUILD BUILDING MASK FROM POLYGON ──
+function applyBuildingMask(){
+  var mc=document.getElementById('mainCanvas');
+  var W=mc.width, H=mc.height;
+  buildingMask=new Uint8Array(W*H);
+
+  // Convert polygon (0-1) to pixel coords
+  var pts=buildingPolygon.map(function(p){return [p[0]*W, p[1]*H];});
+
+  // Draw polygon to offscreen canvas to create mask
+  var offscreen=document.createElement('canvas');
+  offscreen.width=W;offscreen.height=H;
+  var ctx=offscreen.getContext('2d');
+  ctx.fillStyle='white';
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0],pts[0][1]);
+  for(var i=1;i<pts.length;i++) ctx.lineTo(pts[i][0],pts[i][1]);
+  ctx.closePath();
+  ctx.fill();
+
+  var imgData=ctx.getImageData(0,0,W,H).data;
+  for(var j=0;j<W*H;j++){
+    buildingMask[j]=imgData[j*4+3]>127?1:0;
   }
 
-  // scale points
-  scalePts.forEach((p,i)=>{
-    ctx.beginPath();ctx.arc(p.cx,p.cy,9,0,Math.PI*2);
+  // Draw building outline on buildingCanvas
+  drawBuildingOutline(pts);
+}
+
+function drawBuildingOutline(pts){
+  var mc=document.getElementById('mainCanvas');
+  var W=mc.width, H=mc.height;
+  var bc=document.getElementById('buildingCanvas');
+  var ctx=bc.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+
+  // Dim outside
+  ctx.fillStyle='rgba(0,0,0,0.45)';
+  ctx.fillRect(0,0,W,H);
+
+  // Cut out building area (clear inside polygon)
+  ctx.globalCompositeOperation='destination-out';
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0],pts[0][1]);
+  for(var i=1;i<pts.length;i++) ctx.lineTo(pts[i][0],pts[i][1]);
+  ctx.closePath();
+  ctx.fill();
+
+  // Draw purple outline
+  ctx.globalCompositeOperation='source-over';
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0],pts[0][1]);
+  for(var i=1;i<pts.length;i++) ctx.lineTo(pts[i][0],pts[i][1]);
+  ctx.closePath();
+  ctx.strokeStyle='#a855f7';
+  ctx.lineWidth=3;
+  ctx.setLineDash([8,4]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Label
+  var cx=pts.reduce(function(s,p){return s+p[0];},0)/pts.length;
+  var cy=Math.min.apply(null,pts.map(function(p){return p[1];})) - 12;
+  ctx.font='bold 12px Arial';
+  ctx.fillStyle='rgba(168,85,247,.9)';
+  ctx.textAlign='center';
+  var lbl='✨ AI検出: 建物エリア';
+  var tw=ctx.measureText(lbl).width;
+  ctx.fillRect(cx-tw/2-8,cy-14,tw+16,20);
+  ctx.fillStyle='#fff';
+  ctx.fillText(lbl,cx,cy);
+}
+
+// ── SOBEL → edgeMap ──
+function buildEdgeMap(){
+  var mc=document.getElementById('mainCanvas');
+  var W=mc.width, H=mc.height;
+  var src=origImgData.data;
+  edgeMap=new Float32Array(W*H);
+  var maxG=0;
+  var lum=function(x,y){var i=(y*W+x)*4;return 0.299*src[i]+0.587*src[i+1]+0.114*src[i+2];};
+  for(var y=1;y<H-1;y++){
+    for(var x=1;x<W-1;x++){
+      var gx=(-lum(x-1,y-1)-2*lum(x-1,y)-lum(x-1,y+1))+(lum(x+1,y-1)+2*lum(x+1,y)+lum(x+1,y+1));
+      var gy=(-lum(x-1,y-1)-2*lum(x,y-1)-lum(x+1,y-1))+(lum(x-1,y+1)+2*lum(x,y+1)+lum(x+1,y+1));
+      var mag=Math.sqrt(gx*gx+gy*gy);
+      edgeMap[y*W+x]=mag;
+      if(mag>maxG)maxG=mag;
+    }
+  }
+  if(maxG>0){for(var i=0;i<edgeMap.length;i++)edgeMap[i]=(edgeMap[i]/maxG)*255;}
+  drawEdgeOverlay();
+}
+
+function drawEdgeOverlay(){
+  var mc=document.getElementById('mainCanvas');
+  var W=mc.width,H=mc.height;
+  var oc=document.getElementById('overlayCanvas');
+  var ctx=oc.getContext('2d');
+  var out=ctx.createImageData(W,H);
+  var d=out.data;
+  for(var i=0;i<W*H;i++){
+    var oi=i*4;
+    if(edgeMap[i]>edgeSens){d[oi]=255;d[oi+1]=255;d[oi+2]=255;d[oi+3]=160;}
+    else{d[oi]=d[oi+1]=d[oi+2]=0;d[oi+3]=0;}
+  }
+  ctx.putImageData(out,0,0);
+}
+
+// ── SMART FLOOD FILL (with building mask) ──
+function doFloodFill(sx,sy){
+  var mc=document.getElementById('mainCanvas');
+  var W=mc.width,H=mc.height;
+
+  // Check building mask
+  if(buildingMask && buildingMask[sy*W+sx]===0){
+    showToast('建物の外側です。建物内をタップしてください。');
+    return;
+  }
+
+  show('fillProc');
+  setTimeout(function(){
+    var data=origImgData.data;
+    var si=(sy*W+sx)*4;
+    var tR=data[si],tG=data[si+1],tB=data[si+2];
+    var tol3=tolerance*3;
+
+    var mask=new Uint8Array(W*H);
+    var stack=new Int32Array(W*H*2);
+    var top=0,pix=0;
+    var seed=sy*W+sx;
+    mask[seed]=255;
+    stack[top++]=seed;
+
+    while(top>0){
+      var idx=stack[--top];
+      if(mask[idx]===1||mask[idx]===2) continue;
+      // Block outside building mask
+      if(buildingMask && buildingMask[idx]===0){mask[idx]=2;continue;}
+      // Block strong edge
+      if(edgeMap && edgeMap[idx]>edgeSens){mask[idx]=2;continue;}
+      var pi=idx*4;
+      var diff=Math.abs(data[pi]-tR)+Math.abs(data[pi+1]-tG)+Math.abs(data[pi+2]-tB);
+      if(diff>tol3){mask[idx]=2;continue;}
+      mask[idx]=1;pix++;
+      var x=idx%W,y=Math.floor(idx/W);
+      if(x>0&&!mask[idx-1]){mask[idx-1]=255;stack[top++]=idx-1;}
+      if(x<W-1&&!mask[idx+1]){mask[idx+1]=255;stack[top++]=idx+1;}
+      if(y>0&&!mask[idx-W]){mask[idx-W]=255;stack[top++]=idx-W;}
+      if(y<H-1&&!mask[idx+W]){mask[idx+W]=255;stack[top++]=idx+W;}
+    }
+
+    hide('fillProc');
+    if(pix<20)return;
+
+    var sc2=(sy*W+sx)*4;
+    regions.push({
+      type:drawType,mask:mask,pixCount:pix,W:W,H:H,
+      seedColor:[data[sc2],data[sc2+1],data[sc2+2]],
+      label:drawType==='wall'
+        ?'外壁 #'+(regions.filter(function(r){return r.type==='wall';}).length+1)
+        :'窓・扉 #'+(regions.filter(function(r){return r.type==='window';}).length+1)
+    });
+    show('resultSec');
+    if(step!=='result')goStep('result');
+    updateResults();
+    drawSelections();
+  },10);
+}
+
+// Toast
+function showToast(msg){
+  var t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#4f1d96;color:#fff;padding:10px 20px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.5);border:1px solid #7c3aed';
+  t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(function(){t.remove();},2500);
+}
+
+function drawSelections(){
+  var mc=document.getElementById('mainCanvas');
+  var W=mc.width,H=mc.height;
+  var sc2=document.getElementById('selectCanvas');
+  var ctx=sc2.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+
+  for(var ri=0;ri<regions.length;ri++){
+    var reg=regions[ri];
+    var isW=reg.type==='wall';
+    var fR=isW?255:34,fG=isW?107:197,fB=isW?43:94;
+    var oR=isW?255:120,oG=isW?200:255,oB=isW?80:120;
+    var od=ctx.createImageData(W,H);
+    var d=od.data;
+    for(var i=0;i<W*H;i++){
+      if(reg.mask[i]!==1) continue;
+      var x=i%W,y=Math.floor(i/W);
+      var isBound=
+        (x<=1||reg.mask[i-1]!==1||reg.mask[i-2]!==1)||
+        (x>=W-2||reg.mask[i+1]!==1||reg.mask[i+2]!==1)||
+        (y<=1||reg.mask[i-W]!==1||reg.mask[i-2*W]!==1)||
+        (y>=H-2||reg.mask[i+W]!==1||reg.mask[i+2*W]!==1);
+      var pi=i*4;
+      if(isBound){d[pi]=oR;d[pi+1]=oG;d[pi+2]=oB;d[pi+3]=255;}
+      else{d[pi]=fR;d[pi+1]=fG;d[pi+2]=fB;d[pi+3]=55;}
+    }
+    ctx.putImageData(od,0,0);
+  }
+
+  if(ppm){
+    for(var ri2=0;ri2<regions.length;ri2++){
+      var reg2=regions[ri2];
+      var mm2=reg2.pixCount/(ppm*ppm);
+      var lbl=(mm2/1e6).toFixed(2)+'m²';
+      var sumX=0,sumY=0,cnt=0,step3=Math.max(1,Math.floor(W*H/3000));
+      for(var j=0;j<W*H;j+=step3){if(reg2.mask[j]===1){sumX+=j%W;sumY+=Math.floor(j/W);cnt++;}}
+      if(!cnt) continue;
+      var lcx=sumX/cnt,lcy=sumY/cnt;
+      ctx.font='bold 14px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
+      var tw=ctx.measureText(lbl).width;
+      ctx.fillStyle=reg2.type==='wall'?'rgba(160,50,0,.95)':'rgba(10,80,25,.95)';
+      ctx.beginPath();
+      if(ctx.roundRect) ctx.roundRect(lcx-tw/2-7,lcy-12,tw+14,24,6);
+      else ctx.rect(lcx-tw/2-7,lcy-12,tw+14,24);
+      ctx.fill();
+      ctx.fillStyle='#fff';ctx.fillText(lbl,lcx,lcy+1);
+    }
+  }
+  drawScalePts();
+}
+
+function drawScalePts(){
+  var sc2=document.getElementById('selectCanvas');
+  var ctx=sc2.getContext('2d');
+  scalePts.forEach(function(p,i){
+    ctx.beginPath();ctx.arc(p.cx,p.cy,10,0,Math.PI*2);
     ctx.fillStyle='#FFD84D';ctx.fill();
-    ctx.strokeStyle='#000';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.strokeStyle='#000';ctx.lineWidth=2;ctx.stroke();
     ctx.fillStyle='#000';ctx.font='bold 13px Arial';ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.fillText(i===0?'A':'B',p.cx,p.cy+1);
   });
   if(scalePts.length===2){
     ctx.beginPath();ctx.moveTo(scalePts[0].cx,scalePts[0].cy);ctx.lineTo(scalePts[1].cx,scalePts[1].cy);
     ctx.strokeStyle='#FFD84D';ctx.lineWidth=2;ctx.setLineDash([6,3]);ctx.stroke();ctx.setLineDash([]);
-    const mx=(scalePts[0].cx+scalePts[1].cx)/2,my=(scalePts[0].cy+scalePts[1].cy)/2;
-    const ref=document.getElementById('refMm').value;
-    ctx.font='bold 11px Arial';const tw=ctx.measureText(ref+'mm').width;
-    ctx.fillStyle='rgba(255,216,77,.9)';ctx.fillRect(mx-tw/2-5,my-27,tw+10,16);
+    var mx=(scalePts[0].cx+scalePts[1].cx)/2,my=(scalePts[0].cy+scalePts[1].cy)/2;
+    var ref=document.getElementById('refMm').value;
+    ctx.font='bold 11px Arial';var tw2=ctx.measureText(ref+'mm').width;
+    ctx.fillStyle='rgba(255,216,77,.9)';ctx.fillRect(mx-tw2/2-5,my-27,tw2+10,16);
     ctx.fillStyle='#000';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(ref+'mm',mx,my-19);
   }
 }
 
-function setStatus(msg){show('statusBox');document.getElementById('statusBox').textContent=msg;}
+// ── UPLOAD ──
+function handleUpload(e){
+  var file=e.target.files[0];if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    var tmp=new Image();
+    tmp.onload=function(){
+      var MAX=window.innerWidth>700?Math.min(window.innerWidth-310,1200):window.innerWidth-20;
+      var sc=tmp.naturalWidth>MAX?MAX/tmp.naturalWidth:1;
+      var mc=document.getElementById('mainCanvas');
+      var oc=document.getElementById('overlayCanvas');
+      var bc=document.getElementById('buildingCanvas');
+      var sc2=document.getElementById('selectCanvas');
+      var W=Math.round(tmp.naturalWidth*sc),H=Math.round(tmp.naturalHeight*sc);
+      mc.width=oc.width=bc.width=sc2.width=W;
+      mc.height=oc.height=bc.height=sc2.height=H;
+      mc.getContext('2d').drawImage(tmp,0,0,W,H);
+      origImgData=mc.getContext('2d').getImageData(0,0,W,H);
+      regions=[];scalePts=[];ppm=null;edgeMap=null;buildingMask=null;buildingPolygon=null;
+      hide('emptyState');show('canvasWrap');
+      show('aiSec');hide('paramSec');hide('scaleSection');hide('selectSec');hide('resultSec');
+      hide('maskBadge');hide('aiResult');hide('aiError');hide('aiProgress');
+      document.getElementById('aiBtn').disabled=false;
+      document.getElementById('scaleDone').style.display='none';
+      resetPts();goStep('ai');
+      sc2.style.cursor='crosshair';sc2.style.pointerEvents='auto';
+      sc2.ontouchstart=function(e){e.preventDefault();var t=e.changedTouches[0];handleClick(t.clientX,t.clientY);};
+      sc2.onclick=function(e){handleClick(e.clientX,e.clientY);};
+
+      // Extract base64 (resize to max 1024px for API)
+      var apiCanvas=document.createElement('canvas');
+      var apiMax=1024;
+      var apiSc=Math.max(tmp.naturalWidth,tmp.naturalHeight)>apiMax?apiMax/Math.max(tmp.naturalWidth,tmp.naturalHeight):1;
+      apiCanvas.width=Math.round(tmp.naturalWidth*apiSc);
+      apiCanvas.height=Math.round(tmp.naturalHeight*apiSc);
+      apiCanvas.getContext('2d').drawImage(tmp,0,0,apiCanvas.width,apiCanvas.height);
+      var dataUrl=apiCanvas.toDataURL('image/jpeg',0.85);
+      base64Image=dataUrl.split(',')[1];
+
+      buildEdgeMap();
+      document.getElementById('canvasWrap').scrollIntoView({behavior:'smooth',block:'start'});
+    };
+    tmp.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleClick(cx,cy){
+  var sc2=document.getElementById('selectCanvas');
+  var r=sc2.getBoundingClientRect();
+  var pcx=(cx-r.left)*(sc2.width/r.width);
+  var pcy=(cy-r.top)*(sc2.height/r.height);
+  if(step==='scale'){
+    if(scalePts.length>=2) scalePts=[{cx:pcx,cy:pcy}];
+    else scalePts=scalePts.concat([{cx:pcx,cy:pcy}]);
+    setPtUI('ptA',scalePts[0]);setPtUI('ptB',scalePts[1]);
+    if(scalePts.length===2){
+      var dx=scalePts[1].cx-scalePts[0].cx,dy=scalePts[1].cy-scalePts[0].cy;
+      ppm=Math.sqrt(dx*dx+dy*dy)/+document.getElementById('refMm').value;
+      document.getElementById('scaleDone').style.display='flex';
+      show('selectSec');goStep('select');setType('wall');
+    }
+    drawScalePts();return;
+  }
+  if(step==='select'||step==='result'){
+    doFloodFill(Math.round(pcx),Math.round(pcy));
+  }
+}
+
+function updateResults(){
+  if(!ppm) return;
+  var wb=regions.filter(function(r){return r.type==='wall';});
+  var gb=regions.filter(function(r){return r.type==='window';});
+  var wt=wb.reduce(function(s,r){return s+r.pixCount/(ppm*ppm);},0);
+  var gt=gb.reduce(function(s,r){return s+r.pixCount/(ppm*ppm);},0);
+  var nt=wt-gt;
+  document.getElementById('wallVal').textContent=(wt/1e6).toFixed(2)+' m²';
+  document.getElementById('wallCount').textContent=wb.length+'面';
+  document.getElementById('winVal').textContent=(gt/1e6).toFixed(2)+' m²';
+  document.getElementById('winCount').textContent=gb.length+'箇所';
+  document.getElementById('netVal').innerHTML=(nt/1e6).toFixed(2)+'<span style="font-size:17px;color:var(--orange);margin-left:5px">m²</span>';
+  document.getElementById('netFormula').textContent='外壁 '+(wt/1e6).toFixed(2)+' − 開口 '+(gt/1e6).toFixed(2)+' = '+(nt/1e6).toFixed(2)+' m²';
+  document.getElementById('regionList').innerHTML=regions.map(function(r,i){
+    var isW=r.type==='wall',col=isW?'var(--orange)':'var(--green)';
+    var m2=(r.pixCount/(ppm*ppm)/1e6).toFixed(2);
+    var sc3=r.seedColor?'rgb('+r.seedColor.join(',')+')':(isW?'#FF6B2B':'#22c55e');
+    return '<div class="region-item">'+
+      '<div style="display:flex;align-items:center;gap:7px">'+
+        '<div style="width:12px;height:12px;border-radius:3px;background:'+sc3+';border:2px solid '+col+';flex-shrink:0"></div>'+
+        '<span style="font-size:11px;font-weight:600;color:'+col+'">'+r.label+'</span>'+
+      '</div>'+
+      '<div style="display:flex;align-items:center;gap:8px">'+
+        '<span style="font-size:11px;font-weight:700;color:'+col+'">'+m2+'m²</span>'+
+        '<button class="del-btn" onclick="deleteRegion('+i+')">&#x2715;</button>'+
+      '</div></div>';
+  }).join('');
+}
+
+function deleteRegion(i){regions.splice(i,1);if(!regions.length){hide('resultSec');goStep('select');}else updateResults();drawSelections();}
+function undoLast(){if(!regions.length)return;regions.pop();if(!regions.length){hide('resultSec');goStep('select');}else updateResults();drawSelections();}
+function clearAll(){if(!regions.length)return;if(!confirm('全ての選択を消去しますか？'))return;regions=[];hide('resultSec');goStep('select');var sc2=document.getElementById('selectCanvas');sc2.getContext('2d').clearRect(0,0,sc2.width,sc2.height);drawScalePts();}
+function setPtUI(id,pt){var el=document.getElementById(id);if(pt){el.textContent=(id==='ptA'?'点A':'点B')+' ✓';el.className='pt-box set';}else{el.textContent=(id==='ptA'?'点A':'点B')+' —';el.className='pt-box';}}
+function resetPts(){setPtUI('ptA',null);setPtUI('ptB',null);}
+function resetScale(){scalePts=[];ppm=null;resetPts();document.getElementById('scaleDone').style.display='none';goStep('scale');drawSelections();}
 function show(id){document.getElementById(id).style.display='block';}
 function hide(id){document.getElementById(id).style.display='none';}
 </script>
