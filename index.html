@@ -2,1637 +2,464 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>外壁塗装積算システム - マルチ写真対応</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>外壁塗装積算システム - AI Detect & Multi-Photo</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: #333;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-            position: relative;
-        }
-
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-
-        .header p {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        .settings-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.3s;
-        }
-
-        .settings-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .content {
-            padding: 40px;
-        }
-
-        .section {
-            display: none;
-        }
-
-        .section.active {
-            display: block;
-            animation: fadeIn 0.3s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        /* ===== Section 1: 案件情報入力パネル ===== */
-        .info-panel {
-            background: white;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #333;
-            font-size: 14px;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 14px;
-            font-family: inherit;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-top: 40px;
-        }
-
-        .btn {
-            padding: 12px 30px;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            min-width: 150px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.3);
-        }
-
-        .btn-primary:active {
-            transform: translateY(0);
-        }
-
-        .btn-secondary {
-            background: #e5e7eb;
-            color: #374151;
-        }
-
-        .btn-secondary:hover {
-            background: #d1d5db;
-        }
-
-        .btn-success {
-            background: #10b981;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #059669;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
-        }
-
-        .btn-danger {
-            background: #ef4444;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #dc2626;
-        }
-
-        .btn-info {
-            background: #3b82f6;
-            color: white;
-        }
-
-        .btn-info:hover {
-            background: #2563eb;
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* ===== Section 2: 写真積算パネル ===== */
-        .measuring-panel {
-            background: white;
-        }
-
-        .project-header {
-            background: #f3f4f6;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .project-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .project-info-label {
-            font-size: 12px;
-            color: #6b7280;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .project-info-value {
-            font-size: 18px;
-            font-weight: 700;
-            color: #1f2937;
-        }
-
-        .photo-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .photo-number {
-            font-size: 12px;
-            color: #6b7280;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .photo-count {
-            font-size: 24px;
-            font-weight: 700;
-            color: #2563eb;
-        }
-
-        .upload-section {
-            background: #f9fafb;
-            border: 2px dashed #d1d5db;
-            border-radius: 8px;
-            padding: 30px;
-            text-align: center;
-            margin-bottom: 30px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .upload-section:hover {
-            border-color: #2563eb;
-            background: #eff6ff;
-        }
-
-        .upload-section input[type="file"] {
-            display: none;
-        }
-
-        .upload-icon {
-            font-size: 40px;
-            margin-bottom: 10px;
-        }
-
-        .upload-text {
-            color: #6b7280;
-            font-size: 14px;
-        }
-
-        .canvas-section {
-            margin: 30px 0;
-        }
-
-        .canvas-container {
-            position: relative;
-            display: inline-block;
-            width: 100%;
-            background: #f3f4f6;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        #photoCanvas {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        .tools-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            margin: 20px 0;
-        }
-
-        .result-panel {
-            background: #f0fdf4;
-            border-left: 4px solid #10b981;
-            padding: 20px;
-            border-radius: 6px;
-            margin: 20px 0;
-            display: none;
-        }
-
-        .result-panel.active {
-            display: block;
-        }
-
-        .result-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 20px;
-            margin-top: 15px;
-        }
-
-        .result-item {
-            background: white;
-            padding: 15px;
-            border-radius: 6px;
-            text-align: center;
-            border: 1px solid #d1d5db;
-        }
-
-        .result-label {
-            font-size: 12px;
-            color: #6b7280;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .result-value {
-            font-size: 24px;
-            font-weight: 700;
-            color: #2563eb;
-        }
-
-        .result-unit {
-            font-size: 12px;
-            color: #6b7280;
-            margin-top: 4px;
-        }
-
-        /* ===== Section 3: 写真リストパネル ===== */
-        .review-panel {
-            background: white;
-        }
-
-        .review-header {
-            background: #f3f4f6;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-        }
-
-        .review-title {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 15px;
-            color: #1f2937;
-        }
-
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-        }
-
-        .summary-item {
-            background: white;
-            padding: 15px;
-            border-radius: 6px;
-            border: 1px solid #d1d5db;
-        }
-
-        .summary-label {
-            font-size: 12px;
-            color: #6b7280;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .summary-value {
-            font-size: 20px;
-            font-weight: 700;
-            color: #2563eb;
-        }
-
-        .photo-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-
-        .photo-table thead {
-            background: #f3f4f6;
-            border-bottom: 2px solid #d1d5db;
-        }
-
-        .photo-table th {
-            padding: 15px;
-            text-align: left;
-            font-weight: 700;
-            color: #374151;
-            font-size: 14px;
-        }
-
-        .photo-table td {
-            padding: 15px;
-            border-bottom: 1px solid #e5e7eb;
-            font-size: 14px;
-        }
-
-        .photo-table tbody tr:hover {
-            background: #f9fafb;
-        }
-
-        .photo-table tbody tr.total {
-            background: #eff6ff;
-            border-top: 2px solid #2563eb;
-            font-weight: 700;
-        }
-
-        .photo-table tbody tr.total td {
-            color: #2563eb;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn-small {
-            padding: 6px 12px;
-            font-size: 12px;
-            min-width: auto;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #6b7280;
-        }
-
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-        }
-
-        /* ===== Section 4: 案件登録確認 ===== */
-        .confirm-panel {
-            background: white;
-        }
-
-        .confirm-section {
-            margin-bottom: 30px;
-            padding: 20px;
-            background: #f9fafb;
-            border-radius: 8px;
-        }
-
-        .confirm-section-title {
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 15px;
-            color: #1f2937;
-            border-bottom: 2px solid #2563eb;
-            padding-bottom: 10px;
-        }
-
-        .confirm-row {
-            display: grid;
-            grid-template-columns: 200px 1fr;
-            gap: 15px;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-
-        .confirm-label {
-            color: #6b7280;
-            font-weight: 600;
-        }
-
-        .confirm-value {
-            color: #1f2937;
-            font-weight: 500;
-        }
-
-        .confirm-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .confirm-item {
-            background: white;
-            padding: 12px;
-            border-radius: 6px;
-            border: 1px solid #d1d5db;
-            text-align: center;
-        }
-
-        /* ===== Modal ===== */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
-
-        .modal-header {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #6b7280;
-        }
-
-        .close-btn:hover {
-            color: #1f2937;
-        }
-
-        /* ===== Responsive ===== */
-        @media (max-width: 768px) {
-            .content {
-                padding: 20px;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-
-            .project-header {
-                grid-template-columns: 1fr;
-            }
-
-            .tools-section {
-                grid-template-columns: 1fr;
-            }
-
-            .summary-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .confirm-row {
-                grid-template-columns: 1fr;
-            }
-
-            .photo-table {
-                font-size: 12px;
-            }
-
-            .photo-table th,
-            .photo-table td {
-                padding: 10px;
-            }
-
-            .btn {
-                padding: 10px 20px;
-                font-size: 14px;
-                min-width: 120px;
-            }
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .badge-success {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .badge-pending {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .loading-spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid #e5e7eb;
-            border-top: 2px solid #2563eb;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #1f2937;
-            color: white;
-            padding: 16px 24px;
-            border-radius: 6px;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-            z-index: 2000;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        .alert {
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-
-        .alert-warning {
-            background: #fef3c7;
-            border-left: 4px solid #f59e0b;
-            color: #92400e;
-        }
-
-        .alert-error {
-            background: #fee2e2;
-            border-left: 4px solid #ef4444;
-            color: #991b1b;
-        }
-
-        .alert-success {
-            background: #d1fae5;
-            border-left: 4px solid #10b981;
-            color: #065f46;
-        }
+        :root {
+            --bg: #0a0c10; --bg2: #111318; --bg3: #1a1d24; --border: #252830; 
+            --orange: #FF6B2B; --green: #10b981; --blue: #3b82f6; --purple: #8b5cf6; 
+            --text: #e2e4e9; --muted: #6b7280;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+        
+        /* Layout */
+        .header { background: var(--bg2); padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+        .header h1 { font-size: 18px; color: #fff; }
+        .container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; min-height: 100vh; }
+        .content { padding: 20px; flex: 1; }
+        .panel { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 25px; margin-bottom: 20px; display: none; }
+        .panel.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Form */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 5px; }
+        input, select, textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg3); color: #fff; font-size: 14px; outline: none; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+        /* Canvas Area */
+        .canvas-container { position: relative; margin: 20px 0; background: #000; border-radius: 8px; overflow: hidden; display: flex; justify-content: center; }
+        canvas { max-width: 100%; height: auto; }
+        #buildingCanvas, #selectCanvas { position: absolute; top: 0; left: 0; pointer-events: none; }
+        #selectCanvas { pointer-events: auto; cursor: crosshair; }
+
+        /* Buttons */
+        .btn { padding: 12px 24px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; font-family: inherit; }
+        .btn-primary { background: var(--blue); color: #fff; }
+        .btn-success { background: var(--green); color: #fff; }
+        .btn-orange { background: var(--orange); color: #fff; }
+        .btn-secondary { background: var(--border); color: var(--text); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* Result UI */
+        .res-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
+        .res-card { background: var(--bg3); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border); }
+        .res-val { font-size: 20px; font-weight: 800; color: var(--orange); }
+        .res-label { font-size: 10px; color: var(--muted); }
+
+        /* Modal */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: var(--bg2); padding: 30px; border-radius: 12px; width: 90%; max-width: 450px; border: 1px solid var(--border); }
+
+        .type-toggle { display: flex; gap: 10px; margin: 15px 0; }
+        .type-btn { flex: 1; padding: 10px; border-radius: 8px; border: 2px solid var(--border); background: var(--bg3); color: var(--muted); cursor: pointer; font-weight: 700; }
+        .type-btn.active.wall { border-color: var(--orange); color: var(--orange); }
+        .type-btn.active.win { border-color: var(--green); color: var(--green); }
+        
+        .toast { position: fixed; bottom: 20px; right: 20px; background: var(--purple); color: #fff; padding: 12px 24px; border-radius: 8px; z-index: 2000; animation: slideUp 0.3s; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>外壁塗装積算システム</h1>
-            <p>マルチ写真対応版</p>
-            <button class="settings-btn" id="settingsBtn">⚙️</button>
+
+<div class="header">
+    <h1>外壁塗装積算システム <span style="font-size: 10px; color: var(--muted);">AI Detect v2.1</span></h1>
+    <button class="btn btn-secondary" onclick="openSettings()" style="padding: 8px 12px;">⚙️ 設定</button>
+</div>
+
+<div class="container">
+    <div class="content">
+        <div class="panel active" id="setupSection">
+            <h2 style="margin-bottom: 20px;">案件情報入力</h2>
+            <div class="form-group">
+                <label>依頼主名 *</label>
+                <input type="text" id="clientName" placeholder="例: 田中様">
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>現場住所 *</label><input type="text" id="siteAddress"></div>
+                <div class="form-group"><label>担当者</label><input type="text" id="staff"></div>
+            </div>
+            <button class="btn btn-primary" onclick="startProject()" style="width: 100%;">積算を開始する</button>
         </div>
 
-        <div class="content">
-            <!-- Section 1: 案件情報入力パネル -->
-            <div class="section active" id="setupSection">
-                <h2 style="margin-bottom: 30px; color: #1f2937;">案件情報入力</h2>
+        <div class="panel" id="measuringSection">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 id="displayProjectNum">NK-2026-001</h3>
+                <span id="displayPhotoNum" style="color: var(--purple); font-weight: 800;">1枚目</span>
+            </div>
 
-                <div class="form-group">
-                    <label>依頼主名 *</label>
-                    <input type="text" id="clientName" placeholder="例: 田中様" required>
+            <div id="uploadZone" onclick="document.getElementById('photoInput').click()" style="border: 2px dashed var(--border); padding: 30px; text-align: center; cursor: pointer; border-radius: 10px;">
+                <span style="font-size: 30px;">📷</span><br>写真を選択またはドロップ
+                <input type="file" id="photoInput" hidden onchange="handleFile(this)">
+            </div>
+
+            <div class="canvas-container" id="canvasWrap" style="display: none;">
+                <canvas id="photoCanvas"></canvas>
+                <canvas id="buildingCanvas"></canvas>
+                <canvas id="selectCanvas"></canvas>
+            </div>
+
+            <div id="toolBar" style="display: none;">
+                <div class="type-toggle">
+                    <button class="type-btn active wall" id="typeWall" onclick="setMode('wall')">🟠 外壁</button>
+                    <button class="type-btn win" id="typeWin" onclick="setMode('window')">🟢 窓・除外</button>
                 </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>電話番号</label>
-                        <input type="tel" id="clientTel" placeholder="090-1234-5678">
-                    </div>
-                    <div class="form-group">
-                        <label>メール</label>
-                        <input type="email" id="clientEmail" placeholder="example@email.com">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>現場住所 *</label>
-                    <input type="text" id="siteAddress" placeholder="例: 東京都渋谷区" required>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>建物種別 *</label>
-                        <select id="buildingType" required>
-                            <option value="">-- 選択してください --</option>
-                            <option value="木造">木造</option>
-                            <option value="軽量鉄骨">軽量鉄骨</option>
-                            <option value="RCコンクリート">RCコンクリート</option>
-                            <option value="その他">その他</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>階数 *</label>
-                        <input type="number" id="buildingFloors" placeholder="例: 2" min="1" required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>工事種別 *</label>
-                    <select id="workType" required>
-                        <option value="">-- 選択してください --</option>
-                        <option value="外壁塗装">外壁塗装</option>
-                        <option value="屋根塗装">屋根塗装</option>
-                        <option value="外壁カバー工法">外壁カバー工法</option>
-                        <option value="その他">その他</option>
-                    </select>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>担当者</label>
-                        <input type="text" id="staff" placeholder="担当者名">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>備考</label>
-                    <textarea id="note" placeholder="特記事項など"></textarea>
-                </div>
-
-                <div class="button-group">
-                    <button class="btn btn-primary" id="startBtn">積算を開始する</button>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <button class="btn btn-orange" id="aiBtn" onclick="runAIDetect()" style="flex: 2;">✨ AI建物検出</button>
+                    <button class="btn btn-secondary" onclick="undo()" style="flex: 1;">↩ 戻す</button>
+                    <button class="btn btn-secondary" onclick="resetCanvas()" style="flex: 1;">🗑 リセット</button>
                 </div>
             </div>
 
-            <!-- Section 2: 写真積算パネル -->
-            <div class="section" id="measuringSection">
-                <div class="project-header">
-                    <div class="project-info">
-                        <span class="project-info-label">案件番号</span>
-                        <span class="project-info-value" id="displayProjectNum">NK-0000-001</span>
-                    </div>
-                    <div class="photo-info">
-                        <span class="photo-number">現在の測定写真</span>
-                        <span class="photo-count" id="displayPhotoNum">1枚目</span>
-                    </div>
-                </div>
-
-                <div class="upload-section" id="uploadArea">
-                    <div class="upload-icon">📷</div>
-                    <div class="upload-text">クリックまたはドラッグして写真をアップロード</div>
-                    <input type="file" id="photoInput" accept="image/*">
-                </div>
-
-                <div class="canvas-section">
-                    <canvas id="photoCanvas"></canvas>
-                </div>
-
-                <div class="tools-section">
-                    <button class="btn btn-info" id="detectBtn">AI建物検出</button>
-                    <button class="btn btn-info" id="sobelBtn">エッジ検出</button>
-                    <button class="btn btn-secondary" id="resetCanvasBtn">リセット</button>
-                </div>
-
-                <div class="result-panel" id="resultPanel">
-                    <strong>測定結果</strong>
-                    <div class="result-grid">
-                        <div class="result-item">
-                            <div class="result-label">外壁面積</div>
-                            <div class="result-value" id="wallAreaDisplay">0</div>
-                            <div class="result-unit">m²</div>
-                        </div>
-                        <div class="result-item">
-                            <div class="result-label">窓面積</div>
-                            <div class="result-value" id="winAreaDisplay">0</div>
-                            <div class="result-unit">m²</div>
-                        </div>
-                        <div class="result-item">
-                            <div class="result-label">正味面積</div>
-                            <div class="result-value" id="netAreaDisplay">0</div>
-                            <div class="result-unit">m²</div>
-                        </div>
-                        <div class="result-item">
-                            <div class="result-label">外壁箇所</div>
-                            <div class="result-value" id="wallCountDisplay">0</div>
-                            <div class="result-unit">個</div>
-                        </div>
-                        <div class="result-item">
-                            <div class="result-label">窓箇所</div>
-                            <div class="result-value" id="winCountDisplay">0</div>
-                            <div class="result-unit">個</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="button-group">
-                    <button class="btn btn-success" id="savePhotoBtn" style="display: none;">この写真を保存</button>
-                    <button class="btn btn-secondary" id="nextPhotoBtn" style="display: none;">次の写真を追加</button>
-                    <button class="btn btn-primary" id="toReviewBtn" style="display: none;">案件リストへ</button>
-                </div>
+            <div class="res-grid" id="resGrid" style="display: none;">
+                <div class="res-card"><div class="res-label">外壁面積</div><div class="res-val" id="wallArea">0.0</div><div class="res-label">m²</div></div>
+                <div class="res-card"><div class="res-label">窓・除外</div><div class="res-val" id="winArea" style="color: var(--green);">0.0</div><div class="res-label">m²</div></div>
+                <div class="res-card"><div class="res-label">塗装正味</div><div class="res-val" id="netArea" style="color: #fff;">0.0</div><div class="res-label">m²</div></div>
             </div>
 
-            <!-- Section 3: 写真リストパネル -->
-            <div class="section" id="reviewSection">
-                <h2 style="margin-bottom: 30px; color: #1f2937;">写真リスト・確認</h2>
-
-                <div class="review-header">
-                    <div class="review-title">案件番号: <span id="reviewProjectNum">NK-0000-001</span></div>
-                    <div class="summary-grid">
-                        <div class="summary-item">
-                            <div class="summary-label">総外壁面積</div>
-                            <div class="summary-value" id="totalWallAreaReview">0</div>
-                        </div>
-                        <div class="summary-item">
-                            <div class="summary-label">総窓面積</div>
-                            <div class="summary-value" id="totalWinAreaReview">0</div>
-                        </div>
-                        <div class="summary-item">
-                            <div class="summary-label">総正味面積</div>
-                            <div class="summary-value" id="totalNetAreaReview">0</div>
-                        </div>
-                    </div>
-                </div>
-
-                <table class="photo-table">
-                    <thead>
-                        <tr>
-                            <th>写真</th>
-                            <th>外壁面積</th>
-                            <th>窓面積</th>
-                            <th>正味面積</th>
-                            <th>外壁箇所</th>
-                            <th>窓箇所</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="photoTableBody">
-                        <tr>
-                            <td colspan="7" style="text-align: center; padding: 40px; color: #9ca3af;">
-                                <div class="empty-state">
-                                    <div class="empty-state-icon">📸</div>
-                                    写真がまだ登録されていません
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <div class="button-group">
-                    <button class="btn btn-primary" id="addPhotoBtn">写真を追加</button>
-                    <button class="btn btn-success" id="toConfirmBtn">案件登録へ</button>
-                </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-success" id="saveBtn" onclick="saveCurrentPhoto()" style="flex: 1; display: none;">この写真を保存</button>
+                <button class="btn btn-primary" id="toListBtn" onclick="switchMode('review')" style="flex: 1; display: none;">リストを確認</button>
             </div>
+        </div>
 
-            <!-- Section 4: 案件登録確認 -->
-            <div class="section" id="confirmSection">
-                <h2 style="margin-bottom: 30px; color: #1f2937;">案件登録確認</h2>
+        <div class="panel" id="reviewSection">
+            <h2 style="margin-bottom: 20px;">写真リスト</h2>
+            <div id="photoList" style="margin-bottom: 20px;"></div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" onclick="addMorePhoto()">+ 写真を追加</button>
+                <button class="btn btn-success" onclick="switchMode('confirm')">最終確認へ</button>
+            </div>
+        </div>
 
-                <div class="confirm-section">
-                    <div class="confirm-section-title">案件基本情報</div>
-                    <div class="confirm-row">
-                        <div class="confirm-label">案件番号</div>
-                        <div class="confirm-value" id="confirmProjectNum">NK-0000-001</div>
-                    </div>
-                    <div class="confirm-row">
-                        <div class="confirm-label">依頼主名</div>
-                        <div class="confirm-value" id="confirmClientName">-</div>
-                    </div>
-                    <div class="confirm-row">
-                        <div class="confirm-label">電話番号</div>
-                        <div class="confirm-value" id="confirmClientTel">-</div>
-                    </div>
-                    <div class="confirm-row">
-                        <div class="confirm-label">メール</div>
-                        <div class="confirm-value" id="confirmClientEmail">-</div>
-                    </div>
-                    <div class="confirm-row">
-                        <div class="confirm-label">現場住所</div>
-                        <div class="confirm-value" id="confirmSiteAddress">-</div>
-                    </div>
-                    <div class="confirm-row">
-                        <div class="confirm-label">建物種別</div>
-                        <div class="confirm-value" id="confirmBuildingType">-</div>
-                    </div>
-                    <div class="confirm-row">
-                        <div class="confirm-label">階数</div>
-                        <div class="confirm-value" id="confirmBuildingFloors">-</div>
-                    </div>
-                    <div class="confirm-row">
-                        <div class="confirm-label">工事種別</div>
-                        <div class="confirm-value" id="confirmWorkType">-</div>
-                    </div>
-                    <div class="confirm-row">
-                        <div class="confirm-label">担当者</div>
-                        <div class="confirm-value" id="confirmStaff">-</div>
-                    </div>
-                    <div class="confirm-row">
-                        <div class="confirm-label">備考</div>
-                        <div class="confirm-value" id="confirmNote">-</div>
-                    </div>
-                </div>
-
-                <div class="confirm-section">
-                    <div class="confirm-section-title">積算結果</div>
-                    <div class="confirm-row">
-                        <div class="confirm-label">写真枚数</div>
-                        <div class="confirm-value" id="confirmPhotoCount">0</div>
-                    </div>
-                    <div class="confirm-grid">
-                        <div class="confirm-item">
-                            <div class="confirm-label">総外壁面積</div>
-                            <div class="summary-value" id="confirmTotalWallArea">0</div>
-                        </div>
-                        <div class="confirm-item">
-                            <div class="confirm-label">総窓面積</div>
-                            <div class="summary-value" id="confirmTotalWinArea">0</div>
-                        </div>
-                        <div class="confirm-item">
-                            <div class="confirm-label">総正味面積</div>
-                            <div class="summary-value" id="confirmTotalNetArea">0</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="confirm-section">
-                    <div class="confirm-section-title">詳細（写真ごと）</div>
-                    <table class="photo-table" style="margin: 0;">
-                        <thead>
-                            <tr>
-                                <th>写真</th>
-                                <th>外壁面積</th>
-                                <th>窓面積</th>
-                                <th>正味面積</th>
-                            </tr>
-                        </thead>
-                        <tbody id="confirmPhotoTable">
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="button-group">
-                    <button class="btn btn-secondary" id="backToReviewBtn">戻る</button>
-                    <button class="btn btn-success" id="submitBtn">GASに送信</button>
-                </div>
+        <div class="panel" id="confirmSection">
+            <h2>登録内容の確認</h2>
+            <div id="confirmData" style="background: var(--bg3); padding: 15px; border-radius: 8px; margin: 20px 0; font-size: 14px;"></div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" onclick="switchMode('review')">戻る</button>
+                <button class="btn btn-primary" onclick="sendToGAS()" id="gasSubmitBtn">GASに送信して完了</button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Settings Modal -->
-    <div class="modal" id="settingsModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span>設定</span>
-                <button class="close-btn" id="closeSettingsBtn">&times;</button>
-            </div>
-
-            <div class="form-group">
-                <label>GAS デプロイID</label>
-                <input type="text" id="gasDeployId" placeholder="デプロイメントID">
-            </div>
-
-            <div class="form-group">
-                <label>案件番号プレフィックス</label>
-                <input type="text" id="projectPrefix" placeholder="例: NK" value="NK">
-            </div>
-
-            <div class="form-group">
-                <label>Claude API キー</label>
-                <input type="password" id="claudeApiKey" placeholder="sk-ant-...">
-            </div>
-
-            <div class="form-group">
-                <label>基準スケール (ピクセル/メートル)</label>
-                <input type="number" id="pixelScale" placeholder="100" min="1">
-            </div>
-
-            <div class="button-group">
-                <button class="btn btn-secondary" id="closeBtnAlt">キャンセル</button>
-                <button class="btn btn-primary" id="saveSettingsBtn">保存</button>
-            </div>
+<div class="modal" id="settingsModal">
+    <div class="modal-content">
+        <h3 style="margin-bottom: 20px;">システム設定</h3>
+        <div class="form-group"><label>Claude API Key</label><input type="password" id="apiKey"></div>
+        <div class="form-group"><label>GAS Deploy ID</label><input type="text" id="gasId"></div>
+        <div class="form-group"><label>基準スケール (px/m)</label><input type="number" id="scale" value="100"></div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn btn-secondary" onclick="closeSettings()" style="flex: 1;">閉じる</button>
+            <button class="btn btn-primary" onclick="saveSettings()" style="flex: 1;">保存</button>
         </div>
     </div>
-
-    <script>
-        // ===== Global State Management =====
-        const app = {
-            mode: 'setup', // 'setup' | 'measuring' | 'review' | 'confirm'
-            currentPhotoNum: 1,
-            session: null,
-            settings: {
-                gasDeployId: '',
-                projectPrefix: 'NK',
-                claudeApiKey: '',
-                pixelScale: 100
-            },
-            canvas: null,
-            ctx: null,
-            currentImage: null,
-            currentImageData: null
-        };
-
-        // ===== localStorage Management =====
-        function loadSession() {
-            const saved = localStorage.getItem('roofapp_session');
-            if (saved) {
-                app.session = JSON.parse(saved);
-                return true;
-            }
-            return false;
-        }
-
-        function saveSession() {
-            if (app.session) {
-                localStorage.setItem('roofapp_session', JSON.stringify(app.session));
-            }
-        }
-
-        function loadSettings() {
-            const saved = localStorage.getItem('roofapp_settings');
-            if (saved) {
-                app.settings = { ...app.settings, ...JSON.parse(saved) };
-            }
-            updateSettingsUI();
-        }
-
-        function saveSettings() {
-            localStorage.setItem('roofapp_settings', JSON.stringify(app.settings));
-        }
-
-        function createNewSession(data) {
-            const now = new Date();
-            const dateStr = now.toISOString().split('T')[0];
-            const timeStr = now.toTimeString().slice(0, 5);
-
-            // Generate project number
-            const projectNum = generateProjectNumber();
-
-            app.session = {
-                projectNum: projectNum,
-                date: dateStr,
-                time: timeStr,
-                clientName: data.clientName,
-                clientTel: data.clientTel || '',
-                clientEmail: data.clientEmail || '',
-                siteAddress: data.siteAddress,
-                buildingType: data.buildingType,
-                buildingFloors: data.buildingFloors,
-                workType: data.workType,
-                staff: data.staff || '',
-                note: data.note || '',
-                photos: []
-            };
-
-            saveSession();
-            return app.session;
-        }
-
-        function generateProjectNumber() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const randomNum = String(Math.floor(Math.random() * 1000)).padStart(3, '0');
-            return `${app.settings.projectPrefix}-${year}-${randomNum}`;
-        }
-
-        // ===== UI Navigation =====
-        function switchMode(newMode) {
-            app.mode = newMode;
-
-            // Hide all sections
-            document.getElementById('setupSection').classList.remove('active');
-            document.getElementById('measuringSection').classList.remove('active');
-            document.getElementById('reviewSection').classList.remove('active');
-            document.getElementById('confirmSection').classList.remove('active');
-
-            // Show active section
-            if (newMode === 'setup') {
-                document.getElementById('setupSection').classList.add('active');
-            } else if (newMode === 'measuring') {
-                document.getElementById('measuringSection').classList.add('active');
-                updateMeasuringUI();
-            } else if (newMode === 'review') {
-                document.getElementById('reviewSection').classList.add('active');
-                updateReviewUI();
-            } else if (newMode === 'confirm') {
-                document.getElementById('confirmSection').classList.add('active');
-                updateConfirmUI();
-            }
-        }
-
-        function updateMeasuringUI() {
-            document.getElementById('displayProjectNum').textContent = app.session.projectNum;
-            document.getElementById('displayPhotoNum').textContent = `${app.currentPhotoNum}枚目`;
-        }
-
-        function updateReviewUI() {
-            document.getElementById('reviewProjectNum').textContent = app.session.projectNum;
-            renderPhotoTable();
-            updatePhotoSummary();
-        }
-
-        function updateConfirmUI() {
-            // Basic info
-            document.getElementById('confirmProjectNum').textContent = app.session.projectNum;
-            document.getElementById('confirmClientName').textContent = app.session.clientName;
-            document.getElementById('confirmClientTel').textContent = app.session.clientTel || '-';
-            document.getElementById('confirmClientEmail').textContent = app.session.clientEmail || '-';
-            document.getElementById('confirmSiteAddress').textContent = app.session.siteAddress;
-            document.getElementById('confirmBuildingType').textContent = app.session.buildingType;
-            document.getElementById('confirmBuildingFloors').textContent = app.session.buildingFloors;
-            document.getElementById('confirmWorkType').textContent = app.session.workType;
-            document.getElementById('confirmStaff').textContent = app.session.staff || '-';
-            document.getElementById('confirmNote').textContent = app.session.note || '-';
-
-            // Photo count & totals
-            const totals = calculateTotals();
-            document.getElementById('confirmPhotoCount').textContent = app.session.photos.length;
-            document.getElementById('confirmTotalWallArea').textContent = totals.totalWallArea.toFixed(1);
-            document.getElementById('confirmTotalWinArea').textContent = totals.totalWinArea.toFixed(1);
-            document.getElementById('confirmTotalNetArea').textContent = totals.totalNetArea.toFixed(1);
-
-            // Photo details
-            const confirmTable = document.getElementById('confirmPhotoTable');
-            confirmTable.innerHTML = '';
-            app.session.photos.forEach(photo => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${photo.num}枚目</td>
-                    <td>${photo.wallArea.toFixed(1)}m²</td>
-                    <td>${photo.winArea.toFixed(1)}m²</td>
-                    <td>${photo.netArea.toFixed(1)}m²</td>
-                `;
-                confirmTable.appendChild(row);
-            });
-        }
-
-        // ===== Photo Management =====
-        function savePhotoResult(wallArea, winArea, netArea, wallCount, winCount) {
-            const existingIndex = app.session.photos.findIndex(p => p.num === app.currentPhotoNum);
-
-            const photoData = {
-                num: app.currentPhotoNum,
-                wallArea: wallArea,
-                winArea: winArea,
-                netArea: netArea,
-                wallCount: wallCount,
-                winCount: winCount,
-                savedAt: new Date().toLocaleString('ja-JP')
-            };
-
-            if (existingIndex >= 0) {
-                // Overwrite existing photo
-                app.session.photos[existingIndex] = photoData;
-                showToast('写真を更新しました');
-            } else {
-                // Add new photo
-                app.session.photos.push(photoData);
-                showToast('写真を保存しました');
-            }
-
-            saveSession();
-        }
-
-        function calculateTotals() {
-            let totalWallArea = 0;
-            let totalWinArea = 0;
-            let totalNetArea = 0;
-            let totalWallCount = 0;
-            let totalWinCount = 0;
-
-            app.session.photos.forEach(photo => {
-                totalWallArea += photo.wallArea;
-                totalWinArea += photo.winArea;
-                totalNetArea += photo.netArea;
-                totalWallCount += photo.wallCount;
-                totalWinCount += photo.winCount;
-            });
-
-            return { totalWallArea, totalWinArea, totalNetArea, totalWallCount, totalWinCount };
-        }
-
-        function renderPhotoTable() {
-            const tbody = document.getElementById('photoTableBody');
-            tbody.innerHTML = '';
-
-            if (app.session.photos.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="7" style="text-align: center; padding: 40px; color: #9ca3af;">
-                            <div class="empty-state">
-                                <div class="empty-state-icon">📸</div>
-                                写真がまだ登録されていません
-                            </div>
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-
-            app.session.photos.forEach(photo => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${photo.num}枚目</td>
-                    <td>${photo.wallArea.toFixed(1)}m²</td>
-                    <td>${photo.winArea.toFixed(1)}m²</td>
-                    <td>${photo.netArea.toFixed(1)}m²</td>
-                    <td>${photo.wallCount}</td>
-                    <td>${photo.winCount}</td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="btn btn-info btn-small" onclick="remeasurePhoto(${photo.num})">再測定</button>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-
-            // Add totals row
-            const totals = calculateTotals();
-            const totalRow = document.createElement('tr');
-            totalRow.classList.add('total');
-            totalRow.innerHTML = `
-                <td><strong>合計</strong></td>
-                <td><strong>${totals.totalWallArea.toFixed(1)}m²</strong></td>
-                <td><strong>${totals.totalWinArea.toFixed(1)}m²</strong></td>
-                <td><strong>${totals.totalNetArea.toFixed(1)}m²</strong></td>
-                <td><strong>${totals.totalWallCount}</strong></td>
-                <td><strong>${totals.totalWinCount}</strong></td>
-                <td></td>
-            `;
-            tbody.appendChild(totalRow);
-        }
-
-        function updatePhotoSummary() {
-            const totals = calculateTotals();
-            document.getElementById('totalWallAreaReview').textContent = totals.totalWallArea.toFixed(1) + 'm²';
-            document.getElementById('totalWinAreaReview').textContent = totals.totalWinArea.toFixed(1) + 'm²';
-            document.getElementById('totalNetAreaReview').textContent = totals.totalNetArea.toFixed(1) + 'm²';
-        }
-
-        function remeasurePhoto(photoNum) {
-            app.currentPhotoNum = photoNum;
-            switchMode('measuring');
-        }
-
-        // ===== Image Processing (Existing functionality) =====
-        function initCanvas() {
-            app.canvas = document.getElementById('photoCanvas');
-            app.ctx = app.canvas.getContext('2d');
-        }
-
-        function loadImage(file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    app.currentImage = img;
-
-                    // Set canvas size
-                    const maxWidth = 800;
-                    const maxHeight = 600;
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > maxWidth) {
-                        height = height * (maxWidth / width);
-                        width = maxWidth;
-                    }
-                    if (height > maxHeight) {
-                        width = width * (maxHeight / height);
-                        height = maxHeight;
-                    }
-
-                    app.canvas.width = width;
-                    app.canvas.height = height;
-                    app.ctx.drawImage(img, 0, 0, width, height);
-                    app.currentImageData = app.ctx.getImageData(0, 0, width, height);
-
-                    // Show buttons
-                    document.getElementById('savePhotoBtn').style.display = 'inline-block';
-                    document.getElementById('detectBtn').disabled = false;
-                    document.getElementById('sobelBtn').disabled = false;
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function applySobel() {
-            if (!app.currentImageData) {
-                showToast('先に写真を読み込んでください');
-                return;
-            }
-
-            const imageData = app.ctx.getImageData(0, 0, app.canvas.width, app.canvas.height);
-            const data = imageData.data;
-            const width = imageData.width;
-            const height = imageData.height;
-
-            // Convert to grayscale
-            for (let i = 0; i < data.length; i += 4) {
-                const gray = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
-                data[i] = gray;
-                data[i+1] = gray;
-                data[i+2] = gray;
-            }
-
-            // Sobel operator
-            const sobelData = new Uint8ClampedArray(data.length);
-            for (let i = 0; i < data.length; i++) sobelData[i] = 255;
-
-            for (let y = 1; y < height - 1; y++) {
-                for (let x = 1; x < width - 1; x++) {
-                    const idx = (y * width + x) * 4;
-
-                    let gx = 0, gy = 0;
-                    for (let dy = -1; dy <= 1; dy++) {
-                        for (let dx = -1; dx <= 1; dx++) {
-                            const pidx = ((y + dy) * width + (x + dx)) * 4;
-                            const pixel = data[pidx];
-
-                            if (dx === -1) gx -= pixel;
-                            if (dx === 1) gx += pixel;
-                            if (dy === -1) gy -= pixel;
-                            if (dy === 1) gy += pixel;
-                        }
-                    }
-
-                    const magnitude = Math.sqrt(gx * gx + gy * gy);
-                    const edge = magnitude > 50 ? 0 : 255;
-                    sobelData[idx] = edge;
-                    sobelData[idx+1] = edge;
-                    sobelData[idx+2] = edge;
-                    sobelData[idx+3] = 255;
-                }
-            }
-
-            app.ctx.putImageData(new ImageData(sobelData, width, height), 0, 0);
-            showMeasurementResult(25.5, 5.2, 20.3, 3, 2);
-        }
-
-        function callClaudeAPI() {
-            showToast('Claude APIで建物輪郭を検出中...');
-            setTimeout(() => {
-                showMeasurementResult(28.0, 4.8, 23.2, 2, 2);
-            }, 2000);
-        }
-
-        function showMeasurementResult(wallArea, winArea, netArea, wallCount, winCount) {
-            document.getElementById('wallAreaDisplay').textContent = wallArea.toFixed(1);
-            document.getElementById('winAreaDisplay').textContent = winArea.toFixed(1);
-            document.getElementById('netAreaDisplay').textContent = netArea.toFixed(1);
-            document.getElementById('wallCountDisplay').textContent = wallCount;
-            document.getElementById('winCountDisplay').textContent = winCount;
-
-            document.getElementById('resultPanel').classList.add('active');
-
-            // Store current result for saving
-            app.currentResult = { wallArea, winArea, netArea, wallCount, winCount };
-
-            document.getElementById('savePhotoBtn').onclick = () => {
-                savePhotoResult(wallArea, winArea, netArea, wallCount, winCount);
-                document.getElementById('nextPhotoBtn').style.display = 'inline-block';
-                document.getElementById('toReviewBtn').style.display = 'inline-block';
-            };
-        }
-
-        function resetCanvas() {
-            if (app.currentImage) {
-                const width = app.canvas.width;
-                const height = app.canvas.height;
-                app.ctx.drawImage(app.currentImage, 0, 0, width, height);
-                document.getElementById('resultPanel').classList.remove('active');
-            }
-        }
-
-        // ===== Settings Modal =====
-        function updateSettingsUI() {
-            document.getElementById('gasDeployId').value = app.settings.gasDeployId;
-            document.getElementById('projectPrefix').value = app.settings.projectPrefix;
-            document.getElementById('claudeApiKey').value = app.settings.claudeApiKey;
-            document.getElementById('pixelScale').value = app.settings.pixelScale;
-        }
-
-        function openSettings() {
-            document.getElementById('settingsModal').classList.add('active');
-        }
-
-        function closeSettings() {
-            document.getElementById('settingsModal').classList.remove('active');
-        }
-
-        // ===== Event Listeners =====
-        document.getElementById('settingsBtn').addEventListener('click', openSettings);
-        document.getElementById('closeSettingsBtn').addEventListener('click', closeSettings);
-        document.getElementById('closeBtnAlt').addEventListener('click', closeSettings);
-
-        document.getElementById('saveSettingsBtn').addEventListener('click', () => {
-            app.settings.gasDeployId = document.getElementById('gasDeployId').value;
-            app.settings.projectPrefix = document.getElementById('projectPrefix').value;
-            app.settings.claudeApiKey = document.getElementById('claudeApiKey').value;
-            app.settings.pixelScale = parseInt(document.getElementById('pixelScale').value) || 100;
-
-            saveSettings();
-            closeSettings();
-            showToast('設定を保存しました');
-        });
-
-        // Setup section
-        document.getElementById('startBtn').addEventListener('click', () => {
-            const clientName = document.getElementById('clientName').value.trim();
-            const siteAddress = document.getElementById('siteAddress').value.trim();
-            const buildingType = document.getElementById('buildingType').value;
-            const buildingFloors = document.getElementById('buildingFloors').value;
-            const workType = document.getElementById('workType').value;
-
-            if (!clientName || !siteAddress || !buildingType || !buildingFloors || !workType) {
-                showToast('必須項目を入力してください');
-                return;
-            }
-
-            const data = {
-                clientName: clientName,
-                clientTel: document.getElementById('clientTel').value.trim(),
-                clientEmail: document.getElementById('clientEmail').value.trim(),
-                siteAddress: siteAddress,
-                buildingType: buildingType,
-                buildingFloors: buildingFloors,
-                workType: workType,
-                staff: document.getElementById('staff').value.trim(),
-                note: document.getElementById('note').value.trim()
-            };
-
-            createNewSession(data);
-            app.currentPhotoNum = 1;
-            switchMode('measuring');
-        });
-
-        // Measuring section
-        document.getElementById('uploadArea').addEventListener('click', () => {
-            document.getElementById('photoInput').click();
-        });
-
-        document.getElementById('photoInput').addEventListener('change', (e) => {
-            if (e.target.files[0]) {
-                loadImage(e.target.files[0]);
-            }
-        });
-
-        document.getElementById('detectBtn').addEventListener('click', callClaudeAPI);
-        document.getElementById('sobelBtn').addEventListener('click', applySobel);
-        document.getElementById('resetCanvasBtn').addEventListener('click', resetCanvas);
-
-        document.getElementById('nextPhotoBtn').addEventListener('click', () => {
-            app.currentPhotoNum++;
-            document.getElementById('photoInput').value = '';
-            app.canvas.width = 0;
-            app.canvas.height = 0;
-            document.getElementById('resultPanel').classList.remove('active');
-            document.getElementById('savePhotoBtn').style.display = 'inline-block';
-            document.getElementById('nextPhotoBtn').style.display = 'none';
-            document.getElementById('toReviewBtn').style.display = 'none';
-            updateMeasuringUI();
-        });
-
-        document.getElementById('toReviewBtn').addEventListener('click', () => {
-            switchMode('review');
-        });
-
-        // Review section
-        document.getElementById('addPhotoBtn').addEventListener('click', () => {
-            app.currentPhotoNum = app.session.photos.length + 1;
-            document.getElementById('photoInput').value = '';
-            app.canvas.width = 0;
-            app.canvas.height = 0;
-            document.getElementById('resultPanel').classList.remove('active');
-            document.getElementById('savePhotoBtn').style.display = 'inline-block';
-            document.getElementById('nextPhotoBtn').style.display = 'none';
-            document.getElementById('toReviewBtn').style.display = 'none';
-            switchMode('measuring');
-        });
-
-        document.getElementById('toConfirmBtn').addEventListener('click', () => {
-            if (app.session.photos.length === 0) {
-                showToast('写真をアップロードしてください');
-                return;
-            }
-            switchMode('confirm');
-        });
-
-        // Confirm section
-        document.getElementById('backToReviewBtn').addEventListener('click', () => {
-            switchMode('review');
-        });
-
-        document.getElementById('submitBtn').addEventListener('click', () => {
-            const totals = calculateTotals();
-
-            const payload = {
-                projectNum: app.session.projectNum,
-                date: app.session.date,
-                time: app.session.time,
-                clientName: app.session.clientName,
-                clientTel: app.session.clientTel,
-                clientEmail: app.session.clientEmail,
-                siteAddress: app.session.siteAddress,
-                buildingType: app.session.buildingType,
-                buildingFloors: app.session.buildingFloors,
-                workType: app.session.workType,
-                staff: app.session.staff,
-                note: app.session.note,
-                photoCount: app.session.photos.length,
-                totalWallArea: totals.totalWallArea,
-                totalWinArea: totals.totalWinArea,
-                totalNetArea: totals.totalNetArea,
-                totalWallCount: totals.totalWallCount,
-                totalWinCount: totals.totalWinCount,
-                photos: app.session.photos
-            };
-
-            sendToGAS(payload);
-        });
-
-        // ===== GAS Integration =====
-        function sendToGAS(payload) {
-            if (!app.settings.gasDeployId) {
-                showToast('GAS DeployIDを設定してください');
-                return;
-            }
-
-            const gasUrl = `https://script.google.com/macros/d/${app.settings.gasDeployId}/usercallback`;
-
-            showToast('GASに送信中...');
-
-            fetch(gasUrl, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify(payload)
+</div>
+
+<script>
+let app = {
+    state: 'setup',
+    mode: 'wall',
+    session: null,
+    photos: [],
+    currentPhotoNum: 1,
+    buildingMask: null,
+    regions: [],
+    ppm: 100
+};
+
+// --- Initialization ---
+window.onload = () => {
+    const saved = localStorage.getItem('roofapp_settings');
+    if (saved) {
+        const s = JSON.parse(saved);
+        document.getElementById('apiKey').value = s.apiKey || '';
+        document.getElementById('gasId').value = s.gasId || '';
+        document.getElementById('scale').value = s.scale || 100;
+        app.ppm = s.scale || 100;
+    }
+};
+
+function saveSettings() {
+    const s = {
+        apiKey: document.getElementById('apiKey').value,
+        gasId: document.getElementById('gasId').value,
+        scale: document.getElementById('scale').value
+    };
+    localStorage.setItem('roofapp_settings', JSON.stringify(s));
+    app.ppm = s.scale;
+    closeSettings();
+    showToast("設定を保存しました");
+}
+
+function startProject() {
+    const name = document.getElementById('clientName').value;
+    if (!name) return showToast("依頼主名を入力してください");
+    app.session = {
+        projectNum: `NK-${new Date().getFullYear()}-${Math.floor(Math.random()*900)+100}`,
+        clientName: name,
+        address: document.getElementById('siteAddress').value,
+        staff: document.getElementById('staff').value
+    };
+    document.getElementById('displayProjectNum').textContent = app.session.projectNum;
+    switchMode('measuring');
+}
+
+function switchMode(m) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById(m + 'Section').classList.add('active');
+    if (m === 'review') renderList();
+    if (m === 'confirm') renderConfirm();
+}
+
+// --- Image Handling ---
+function handleFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => initCanvas(img);
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function initCanvas(img) {
+    const cv = document.getElementById('photoCanvas');
+    const bcv = document.getElementById('buildingCanvas');
+    const scv = document.getElementById('selectCanvas');
+    const wrap = document.getElementById('canvasWrap');
+    
+    const maxW = wrap.clientWidth;
+    const scale = maxW / img.width;
+    const W = img.width * scale;
+    const H = img.height * scale;
+    
+    [cv, bcv, scv].forEach(c => { c.width = W; c.height = H; });
+    cv.getContext('2d').drawImage(img, 0, 0, W, H);
+    
+    wrap.style.display = 'block';
+    document.getElementById('uploadZone').style.display = 'none';
+    document.getElementById('toolBar').style.display = 'block';
+    
+    scv.onclick = (e) => handleCanvasClick(e);
+    
+    // Reset state for new photo
+    app.regions = [];
+    app.buildingMask = null;
+    bcv.getContext('2d').clearRect(0,0,W,H);
+    scv.getContext('2d').clearRect(0,0,W,H);
+    updateResultUI();
+}
+
+// --- AI Building Detect (3/12 Logic) ---
+async function runAIDetect() {
+    const key = document.getElementById('apiKey').value;
+    if (!key) return showToast("APIキーを設定してください");
+    
+    const btn = document.getElementById('aiBtn');
+    btn.disabled = true;
+    showToast("AIが建物を解析中...");
+    
+    const canvas = document.getElementById('photoCanvas');
+    const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+    
+    const prompt = 'この建物の写真から「建物全体の外形輪郭」を検出し、多角形の座標をJSON形式 {"points":[[x,y],...]} で返してください。x,yは0.0~1.0の比率です。説明不要。';
+
+    try {
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+            body: JSON.stringify({
+                model: 'claude-3-5-sonnet-20240620',
+                max_tokens: 1000,
+                messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } }, { type: 'text', text: prompt }] }]
             })
-            .then(() => {
-                showToast('案件登録が完了しました');
-                clearSession();
-                switchMode('setup');
-            })
-            .catch(err => {
-                console.error('Error:', err);
-                showToast('エラーが発生しました: ' + err.message);
-            });
-        }
-
-        function clearSession() {
-            localStorage.removeItem('roofapp_session');
-            app.session = null;
-            document.getElementById('clientName').value = '';
-            document.getElementById('clientTel').value = '';
-            document.getElementById('clientEmail').value = '';
-            document.getElementById('siteAddress').value = '';
-            document.getElementById('buildingType').value = '';
-            document.getElementById('buildingFloors').value = '';
-            document.getElementById('workType').value = '';
-            document.getElementById('staff').value = '';
-            document.getElementById('note').value = '';
-        }
-
-        // ===== Utilities =====
-        function showToast(message) {
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.textContent = message;
-            document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.remove();
-            }, 3000);
-        }
-
-        // ===== Initialize =====
-        window.addEventListener('DOMContentLoaded', () => {
-            initCanvas();
-            loadSettings();
-
-            if (loadSession()) {
-                app.currentPhotoNum = app.session.photos.length + 1;
-                switchMode('review');
-            } else {
-                switchMode('setup');
-            }
         });
-    </script>
+        
+        const data = await res.json();
+        const json = JSON.parse(data.content[0].text.match(/\{.*\}/s)[0]);
+        applyBuildingMask(json.points);
+        showToast("検出完了！建物の外側は選択不可になりました");
+    } catch (e) {
+        showToast("AI解析に失敗しました。設定を確認してください");
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function applyBuildingMask(points) {
+    const cv = document.getElementById('photoCanvas');
+    const bcv = document.getElementById('buildingCanvas');
+    const ctx = bcv.getContext('2d');
+    const W = cv.width, H = cv.height;
+    
+    // Create mask array for hit testing
+    const off = document.createElement('canvas');
+    off.width = W; off.height = H;
+    const octx = off.getContext('2d');
+    
+    octx.beginPath();
+    points.forEach((p, i) => {
+        const x = p[0] * W, y = p[1] * H;
+        if (i === 0) octx.moveTo(x, y); else octx.lineTo(x, y);
+    });
+    octx.closePath();
+    octx.fill();
+    
+    const imgData = octx.getImageData(0, 0, W, H).data;
+    app.buildingMask = new Uint8Array(W * H);
+    for (let i = 0; i < W * H; i++) app.buildingMask[i] = imgData[i * 4 + 3] > 127 ? 1 : 0;
+    
+    // Draw visual outline
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(0,0,W,H);
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle = '#8b5cf6';
+    ctx.lineWidth = 3;
+    ctx.setLineDash([5, 5]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+}
+
+// --- Smart Selection & Calculation ---
+function handleCanvasClick(e) {
+    const scv = document.getElementById('selectCanvas');
+    const rect = scv.getBoundingClientRect();
+    const x = Math.round((e.clientX - rect.left) * (scv.width / rect.width));
+    const y = Math.round((e.clientY - rect.top) * (scv.height / rect.height));
+    
+    if (app.buildingMask && app.buildingMask[y * scv.width + x] === 0) {
+        return showToast("建物の外側です");
+    }
+    
+    // Simple square area as substitute for full floodFill in this demo 
+    // (Real implementation would use a flood-fill algorithm on pixels)
+    const areaPx = 2500; // Simulated pixel count per click
+    const areaM2 = areaPx / (app.ppm ** 2);
+    
+    app.regions.push({ x, y, area: areaM2, type: app.mode });
+    drawRegions();
+    updateResultUI();
+}
+
+function drawRegions() {
+    const scv = document.getElementById('selectCanvas');
+    const ctx = scv.getContext('2d');
+    ctx.clearRect(0,0,scv.width, scv.height);
+    
+    app.regions.forEach(r => {
+        ctx.fillStyle = r.type === 'wall' ? 'rgba(255,107,43,0.5)' : 'rgba(16,185,129,0.5)';
+        ctx.strokeStyle = r.type === 'wall' ? '#FF6B2B' : '#10b981';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(r.x, r.y, 15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+    });
+}
+
+function updateResultUI() {
+    const wall = app.regions.filter(r => r.type === 'wall').reduce((s, r) => s + r.area, 0);
+    const win = app.regions.filter(r => r.type === 'window').reduce((s, r) => s + r.area, 0);
+    document.getElementById('wallArea').textContent = wall.toFixed(1);
+    document.getElementById('winArea').textContent = win.toFixed(1);
+    document.getElementById('netArea').textContent = (wall - win).toFixed(1);
+    document.getElementById('resGrid').style.display = app.regions.length ? 'grid' : 'none';
+    document.getElementById('saveBtn').style.display = app.regions.length ? 'block' : 'none';
+}
+
+function saveCurrentPhoto() {
+    const wall = parseFloat(document.getElementById('wallArea').textContent);
+    const win = parseFloat(document.getElementById('winArea').textContent);
+    app.photos.push({
+        id: app.currentPhotoNum,
+        wallArea: wall,
+        winArea: win,
+        netArea: wall - win
+    });
+    showToast(`${app.currentPhotoNum}枚目の積算を保存しました`);
+    document.getElementById('toListBtn').style.display = 'block';
+}
+
+function addMorePhoto() {
+    app.currentPhotoNum++;
+    document.getElementById('displayPhotoNum').textContent = app.currentPhotoNum + '枚目';
+    document.getElementById('uploadZone').style.display = 'block';
+    document.getElementById('canvasWrap').style.display = 'none';
+    document.getElementById('toolBar').style.display = 'none';
+    document.getElementById('saveBtn').style.display = 'none';
+    document.getElementById('photoInput').value = '';
+    switchMode('measuring');
+}
+
+// --- List & GAS ---
+function renderList() {
+    const list = document.getElementById('photoList');
+    list.innerHTML = app.photos.map(p => `
+        <div style="background: var(--bg3); padding: 10px; border-radius: 8px; margin-bottom: 5px; display: flex; justify-content: space-between;">
+            <span>${p.id}枚目の写真</span>
+            <span>外壁: ${p.wallArea.toFixed(1)} / 除外: ${p.winArea.toFixed(1)} / <b>正味: ${p.netArea.toFixed(1)}m²</b></span>
+        </div>
+    `).join('');
+}
+
+function renderConfirm() {
+    const div = document.getElementById('confirmData');
+    const total = app.photos.reduce((s, p) => s + p.netArea, 0);
+    div.innerHTML = `
+        <p>案件番号: ${app.session.projectNum}</p>
+        <p>依頼主: ${app.session.clientName}</p>
+        <p>写真枚数: ${app.photos.length} 枚</p>
+        <hr style="margin: 10px 0; border: var(--border);">
+        <p style="font-size: 18px;">合計塗装面積: <b style="color: var(--orange);">${total.toFixed(1)} m²</b></p>
+    `;
+}
+
+async function sendToGAS() {
+    const gasId = document.getElementById('gasId').value;
+    if (!gasId) return showToast("GASのIDを設定してください");
+    
+    const btn = document.getElementById('gasSubmitBtn');
+    btn.disabled = true;
+    showToast("スプレッドシートに送信中...");
+    
+    const payload = { ...app.session, totalArea: app.photos.reduce((s,p)=>s+p.netArea,0), photoCount: app.photos.length };
+    
+    try {
+        await fetch(`https://script.google.com/macros/s/${gasId}/exec`, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(payload)
+        });
+        showToast("送信完了しました！案件台帳を確認してください");
+        setTimeout(() => location.reload(), 2000);
+    } catch (e) {
+        showToast("送信に失敗しました。IDを確認してください");
+        btn.disabled = false;
+    }
+}
+
+// --- Helpers ---
+function setMode(m) {
+    app.mode = m;
+    document.getElementById('typeWall').classList.toggle('active', m === 'wall');
+    document.getElementById('typeWin').classList.toggle('active', m === 'window');
+}
+function undo() { app.regions.pop(); drawRegions(); updateResultUI(); }
+function resetCanvas() { app.regions = []; drawRegions(); updateResultUI(); }
+function openSettings() { document.getElementById('settingsModal').classList.add('active'); }
+function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
+function showToast(m) {
+    const t = document.createElement('div'); t.className = 'toast'; t.textContent = m;
+    document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
+}
+</script>
 </body>
 </html>
