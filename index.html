@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>外壁塗装積算システム - AI Detect v2.2</title>
+    <title>外壁塗装積算システム - AI Detect v2.2 Final</title>
     <style>
         :root {
             --bg: #0a0c10; --bg2: #111318; --bg3: #1a1d24; --border: #252830; 
@@ -222,9 +222,12 @@ function initCanvas(img) {
     
     const maxW = wrap.clientWidth;
     const scale = maxW / img.width;
-    const W = img.width * scale;
-    const H = img.height * scale;
+    const W = Math.round(img.width * scale);
+    const H = Math.round(img.height * scale);
     
+    // サイズが0になるのを防止
+    if(W === 0 || H === 0) return showToast("画像の読み込みに失敗しました");
+
     [cv, bcv, scv].forEach(c => { c.width = W; c.height = H; });
     cv.getContext('2d').drawImage(img, 0, 0, W, H);
     
@@ -239,29 +242,26 @@ function initCanvas(img) {
     updateResultUI();
 }
 
-// --- AI Detect (Fixed for 400 error) ---
+// --- AI Detect (Fixed Image Argument Error) ---
 async function runAIDetect() {
     const key = document.getElementById('apiKey').value.trim();
     if (!key) return showToast("設定からAPIキーを入力してください");
     
+    const canvas = document.getElementById('photoCanvas');
+    if (!canvas || canvas.width === 0 || canvas.height === 0) {
+        return showToast("先に写真をアップロードしてください");
+    }
+
     const btn = document.getElementById('aiBtn');
     btn.disabled = true;
     showToast("AI建物解析中...");
     
-    const canvas = document.getElementById('photoCanvas');
-    // リサイズして軽量化
-    const tempCanvas = document.createElement('canvas');
-    const maxDim = 800;
-    let w = canvas.width, h = canvas.height;
-    if (w > h) { if (w > maxDim) { h *= maxDim/w; w = maxDim; } }
-    else { if (h > maxDim) { w *= maxDim/h; h = maxDim; } }
-    tempCanvas.width = w; tempCanvas.height = h;
-    tempCanvas.getContext('2d').drawImage(canvas, 0, 0, w, h);
-    const base64 = tempCanvas.toDataURL('image/jpeg', 0.7).split(',')[1];
-    
-    const prompt = '画像内のメインの建物全体の輪郭を1つの多角形として検出し、座標をJSON形式 {"points":[[x,y],...]} で返してください。xとyは0.0から1.0の数値です。余計な説明は不要です。';
-
     try {
+        // 現在のキャンバスの状態をBase64化（リサイズせず直接取得）
+        const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+        
+        const prompt = '画像内のメインの建物全体の輪郭を1つの多角形として検出し、座標をJSON形式 {"points":[[x,y],...]} で返してください。xとyは0.0から1.0の数値です。余計な説明は不要です。';
+
         const res = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
@@ -285,9 +285,7 @@ async function runAIDetect() {
         
         const data = await res.json();
         
-        if (data.error) {
-            throw new Error(data.error.message || "APIエラー");
-        }
+        if (data.error) throw new Error(data.error.message || "APIエラー");
 
         const text = data.content[0].text;
         const jsonMatch = text.match(/\{.*\}/s);
@@ -310,32 +308,37 @@ function applyBuildingMask(points) {
     const ctx = bcv.getContext('2d');
     const W = cv.width, H = cv.height;
     
+    // マスク用のオフスクリーンキャンバス
     const off = document.createElement('canvas');
     off.width = W; off.height = H;
     const octx = off.getContext('2d');
+    
     octx.beginPath();
     points.forEach((p, i) => {
         const x = p[0] * W, y = p[1] * H;
         if (i === 0) octx.moveTo(x, y); else octx.lineTo(x, y);
     });
     octx.closePath();
+    octx.fillStyle = "white";
     octx.fill();
     
     const imgData = octx.getImageData(0, 0, W, H).data;
     app.buildingMask = new Uint8Array(W * H);
     for (let i = 0; i < W * H; i++) app.buildingMask[i] = imgData[i * 4 + 3] > 127 ? 1 : 0;
     
+    // 視覚的演出（建物以外を暗く）
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(0,0,W,H);
     ctx.globalCompositeOperation = 'destination-out';
-    octx.fill(); // Reuse offscreen path if possible or redraw
+    
     ctx.beginPath();
     points.forEach((p, i) => {
         const x = p[0] * W, y = p[1] * H;
         if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     });
     ctx.fill();
+    
     ctx.globalCompositeOperation = 'source-over';
     ctx.strokeStyle = '#8b5cf6'; ctx.lineWidth = 3; ctx.setLineDash([5, 5]); ctx.stroke();
 }
@@ -350,7 +353,7 @@ function handleCanvasClick(e) {
         return showToast("建物の外側です");
     }
     
-    const areaPx = 2500; // ダミー値。本来は領域拡張アルゴリズムを使用
+    const areaPx = 2500; // 1クリックあたりの面積（ダミー）
     const areaM2 = areaPx / (app.ppm ** 2);
     app.regions.push({ x, y, area: areaM2, type: app.mode });
     drawRegions(); updateResultUI();
