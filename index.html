@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>外壁塗装積算システム - AI Detect & Multi-Photo</title>
+    <title>外壁塗装積算システム - AI Detect v2.2</title>
     <style>
         :root {
             --bg: #0a0c10; --bg2: #111318; --bg3: #1a1d24; --border: #252830; 
@@ -11,9 +11,8 @@
             --text: #e2e4e9; --muted: #6b7280;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; overflow-x: hidden; }
         
-        /* Layout */
         .header { background: var(--bg2); padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
         .header h1 { font-size: 18px; color: #fff; }
         .container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; min-height: 100vh; }
@@ -22,19 +21,16 @@
         .panel.active { display: block; animation: fadeIn 0.3s ease; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* Form */
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 5px; }
         input, select, textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg3); color: #fff; font-size: 14px; outline: none; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 
-        /* Canvas Area */
-        .canvas-container { position: relative; margin: 20px 0; background: #000; border-radius: 8px; overflow: hidden; display: flex; justify-content: center; }
+        .canvas-container { position: relative; margin: 20px 0; background: #000; border-radius: 8px; overflow: hidden; display: flex; justify-content: center; min-height: 200px; }
         canvas { max-width: 100%; height: auto; }
-        #buildingCanvas, #selectCanvas { position: absolute; top: 0; left: 0; pointer-events: none; }
+        #buildingCanvas, #selectCanvas { position: absolute; top: 0; left: 0; pointer-events: none; width: 100%; height: 100%; }
         #selectCanvas { pointer-events: auto; cursor: crosshair; }
 
-        /* Buttons */
         .btn { padding: 12px 24px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; font-family: inherit; }
         .btn-primary { background: var(--blue); color: #fff; }
         .btn-success { background: var(--green); color: #fff; }
@@ -42,13 +38,11 @@
         .btn-secondary { background: var(--border); color: var(--text); }
         .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        /* Result UI */
         .res-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 15px 0; }
         .res-card { background: var(--bg3); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border); }
         .res-val { font-size: 20px; font-weight: 800; color: var(--orange); }
         .res-label { font-size: 10px; color: var(--muted); }
 
-        /* Modal */
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; }
         .modal.active { display: flex; }
         .modal-content { background: var(--bg2); padding: 30px; border-radius: 12px; width: 90%; max-width: 450px; border: 1px solid var(--border); }
@@ -58,14 +52,14 @@
         .type-btn.active.wall { border-color: var(--orange); color: var(--orange); }
         .type-btn.active.win { border-color: var(--green); color: var(--green); }
         
-        .toast { position: fixed; bottom: 20px; right: 20px; background: var(--purple); color: #fff; padding: 12px 24px; border-radius: 8px; z-index: 2000; animation: slideUp 0.3s; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: var(--purple); color: #fff; padding: 12px 24px; border-radius: 8px; z-index: 2000; animation: slideUp 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>外壁塗装積算システム <span style="font-size: 10px; color: var(--muted);">AI Detect v2.1</span></h1>
+    <h1>外壁塗装積算システム <span style="font-size: 10px; color: var(--muted);">AI Detect v2.2</span></h1>
     <button class="btn btn-secondary" onclick="openSettings()" style="padding: 8px 12px;">⚙️ 設定</button>
 </div>
 
@@ -86,12 +80,12 @@
 
         <div class="panel" id="measuringSection">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 id="displayProjectNum">NK-2026-001</h3>
+                <h3 id="displayProjectNum">NK-2026-000</h3>
                 <span id="displayPhotoNum" style="color: var(--purple); font-weight: 800;">1枚目</span>
             </div>
 
-            <div id="uploadZone" onclick="document.getElementById('photoInput').click()" style="border: 2px dashed var(--border); padding: 30px; text-align: center; cursor: pointer; border-radius: 10px;">
-                <span style="font-size: 30px;">📷</span><br>写真を選択またはドロップ
+            <div id="uploadZone" onclick="document.getElementById('photoInput').click()" style="border: 2px dashed var(--border); padding: 40px; text-align: center; cursor: pointer; border-radius: 10px; background: var(--bg3);">
+                <span style="font-size: 40px;">📷</span><br>建物写真を選択してください
                 <input type="file" id="photoInput" hidden onchange="handleFile(this)">
             </div>
 
@@ -109,7 +103,7 @@
                 <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                     <button class="btn btn-orange" id="aiBtn" onclick="runAIDetect()" style="flex: 2;">✨ AI建物検出</button>
                     <button class="btn btn-secondary" onclick="undo()" style="flex: 1;">↩ 戻す</button>
-                    <button class="btn btn-secondary" onclick="resetCanvas()" style="flex: 1;">🗑 リセット</button>
+                    <button class="btn btn-secondary" onclick="resetCanvas()" style="flex: 1;">🗑 クリア</button>
                 </div>
             </div>
 
@@ -139,7 +133,7 @@
             <div id="confirmData" style="background: var(--bg3); padding: 15px; border-radius: 8px; margin: 20px 0; font-size: 14px;"></div>
             <div style="display: flex; gap: 10px;">
                 <button class="btn btn-secondary" onclick="switchMode('review')">戻る</button>
-                <button class="btn btn-primary" onclick="sendToGAS()" id="gasSubmitBtn">GASに送信して完了</button>
+                <button class="btn btn-primary" onclick="sendToGAS()" id="gasSubmitBtn">スプレッドシートに送信</button>
             </div>
         </div>
     </div>
@@ -148,8 +142,8 @@
 <div class="modal" id="settingsModal">
     <div class="modal-content">
         <h3 style="margin-bottom: 20px;">システム設定</h3>
-        <div class="form-group"><label>Claude API Key</label><input type="password" id="apiKey"></div>
-        <div class="form-group"><label>GAS Deploy ID</label><input type="text" id="gasId"></div>
+        <div class="form-group"><label>Claude API Key (sk-ant-...)</label><input type="password" id="apiKey" placeholder="APIキーを入力"></div>
+        <div class="form-group"><label>GAS WebApp URL</label><input type="text" id="gasId" placeholder="https://script.google.com/macros/s/.../exec"></div>
         <div class="form-group"><label>基準スケール (px/m)</label><input type="number" id="scale" value="100"></div>
         <div style="display: flex; gap: 10px; margin-top: 20px;">
             <button class="btn btn-secondary" onclick="closeSettings()" style="flex: 1;">閉じる</button>
@@ -160,17 +154,11 @@
 
 <script>
 let app = {
-    state: 'setup',
-    mode: 'wall',
-    session: null,
-    photos: [],
-    currentPhotoNum: 1,
-    buildingMask: null,
-    regions: [],
-    ppm: 100
+    state: 'setup', mode: 'wall', session: null, photos: [], currentPhotoNum: 1,
+    buildingMask: null, regions: [], ppm: 100
 };
 
-// --- Initialization ---
+// --- Settings ---
 window.onload = () => {
     const saved = localStorage.getItem('roofapp_settings');
     if (saved) {
@@ -184,8 +172,8 @@ window.onload = () => {
 
 function saveSettings() {
     const s = {
-        apiKey: document.getElementById('apiKey').value,
-        gasId: document.getElementById('gasId').value,
+        apiKey: document.getElementById('apiKey').value.trim(),
+        gasId: document.getElementById('gasId').value.trim(),
         scale: document.getElementById('scale').value
     };
     localStorage.setItem('roofapp_settings', JSON.stringify(s));
@@ -194,14 +182,13 @@ function saveSettings() {
     showToast("設定を保存しました");
 }
 
+// --- Navigation ---
 function startProject() {
     const name = document.getElementById('clientName').value;
     if (!name) return showToast("依頼主名を入力してください");
     app.session = {
         projectNum: `NK-${new Date().getFullYear()}-${Math.floor(Math.random()*900)+100}`,
-        clientName: name,
-        address: document.getElementById('siteAddress').value,
-        staff: document.getElementById('staff').value
+        clientName: name, address: document.getElementById('siteAddress').value, staff: document.getElementById('staff').value
     };
     document.getElementById('displayProjectNum').textContent = app.session.projectNum;
     switchMode('measuring');
@@ -214,7 +201,7 @@ function switchMode(m) {
     if (m === 'confirm') renderConfirm();
 }
 
-// --- Image Handling ---
+// --- Image handling ---
 function handleFile(input) {
     const file = input.files[0];
     if (!file) return;
@@ -246,46 +233,72 @@ function initCanvas(img) {
     document.getElementById('toolBar').style.display = 'block';
     
     scv.onclick = (e) => handleCanvasClick(e);
-    
-    // Reset state for new photo
-    app.regions = [];
-    app.buildingMask = null;
+    app.regions = []; app.buildingMask = null;
     bcv.getContext('2d').clearRect(0,0,W,H);
     scv.getContext('2d').clearRect(0,0,W,H);
     updateResultUI();
 }
 
-// --- AI Building Detect (3/12 Logic) ---
+// --- AI Detect (Fixed for 400 error) ---
 async function runAIDetect() {
-    const key = document.getElementById('apiKey').value;
-    if (!key) return showToast("APIキーを設定してください");
+    const key = document.getElementById('apiKey').value.trim();
+    if (!key) return showToast("設定からAPIキーを入力してください");
     
     const btn = document.getElementById('aiBtn');
     btn.disabled = true;
-    showToast("AIが建物を解析中...");
+    showToast("AI建物解析中...");
     
     const canvas = document.getElementById('photoCanvas');
-    const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+    // リサイズして軽量化
+    const tempCanvas = document.createElement('canvas');
+    const maxDim = 800;
+    let w = canvas.width, h = canvas.height;
+    if (w > h) { if (w > maxDim) { h *= maxDim/w; w = maxDim; } }
+    else { if (h > maxDim) { w *= maxDim/h; h = maxDim; } }
+    tempCanvas.width = w; tempCanvas.height = h;
+    tempCanvas.getContext('2d').drawImage(canvas, 0, 0, w, h);
+    const base64 = tempCanvas.toDataURL('image/jpeg', 0.7).split(',')[1];
     
-    const prompt = 'この建物の写真から「建物全体の外形輪郭」を検出し、多角形の座標をJSON形式 {"points":[[x,y],...]} で返してください。x,yは0.0~1.0の比率です。説明不要。';
+    const prompt = '画像内のメインの建物全体の輪郭を1つの多角形として検出し、座標をJSON形式 {"points":[[x,y],...]} で返してください。xとyは0.0から1.0の数値です。余計な説明は不要です。';
 
     try {
         const res = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': key,
+                'anthropic-version': '2023-06-01',
+                'anthropic-dangerous-direct-browser-access': 'true'
+            },
             body: JSON.stringify({
-                model: 'claude-3-5-sonnet-20240620',
-                max_tokens: 1000,
-                messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } }, { type: 'text', text: prompt }] }]
+                model: 'claude-3-5-sonnet-latest',
+                max_tokens: 1024,
+                messages: [{
+                    role: 'user',
+                    content: [
+                        { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
+                        { type: 'text', text: prompt }
+                    ]
+                }]
             })
         });
         
         const data = await res.json();
-        const json = JSON.parse(data.content[0].text.match(/\{.*\}/s)[0]);
+        
+        if (data.error) {
+            throw new Error(data.error.message || "APIエラー");
+        }
+
+        const text = data.content[0].text;
+        const jsonMatch = text.match(/\{.*\}/s);
+        if (!jsonMatch) throw new Error("AIの応答形式が正しくありません");
+        
+        const json = JSON.parse(jsonMatch[0]);
         applyBuildingMask(json.points);
-        showToast("検出完了！建物の外側は選択不可になりました");
+        showToast("検出成功！建物エリアを特定しました");
     } catch (e) {
-        showToast("AI解析に失敗しました。設定を確認してください");
+        console.error(e);
+        showToast("失敗: " + e.message);
     } finally {
         btn.disabled = false;
     }
@@ -297,11 +310,9 @@ function applyBuildingMask(points) {
     const ctx = bcv.getContext('2d');
     const W = cv.width, H = cv.height;
     
-    // Create mask array for hit testing
     const off = document.createElement('canvas');
     off.width = W; off.height = H;
     const octx = off.getContext('2d');
-    
     octx.beginPath();
     points.forEach((p, i) => {
         const x = p[0] * W, y = p[1] * H;
@@ -314,21 +325,21 @@ function applyBuildingMask(points) {
     app.buildingMask = new Uint8Array(W * H);
     for (let i = 0; i < W * H; i++) app.buildingMask[i] = imgData[i * 4 + 3] > 127 ? 1 : 0;
     
-    // Draw visual outline
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(0,0,W,H);
     ctx.globalCompositeOperation = 'destination-out';
+    octx.fill(); // Reuse offscreen path if possible or redraw
+    ctx.beginPath();
+    points.forEach((p, i) => {
+        const x = p[0] * W, y = p[1] * H;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    });
     ctx.fill();
     ctx.globalCompositeOperation = 'source-over';
-    ctx.strokeStyle = '#8b5cf6';
-    ctx.lineWidth = 3;
-    ctx.setLineDash([5, 5]);
-    ctx.stroke();
-    ctx.setLineDash([]);
+    ctx.strokeStyle = '#8b5cf6'; ctx.lineWidth = 3; ctx.setLineDash([5, 5]); ctx.stroke();
 }
 
-// --- Smart Selection & Calculation ---
 function handleCanvasClick(e) {
     const scv = document.getElementById('selectCanvas');
     const rect = scv.getBoundingClientRect();
@@ -339,29 +350,20 @@ function handleCanvasClick(e) {
         return showToast("建物の外側です");
     }
     
-    // Simple square area as substitute for full floodFill in this demo 
-    // (Real implementation would use a flood-fill algorithm on pixels)
-    const areaPx = 2500; // Simulated pixel count per click
+    const areaPx = 2500; // ダミー値。本来は領域拡張アルゴリズムを使用
     const areaM2 = areaPx / (app.ppm ** 2);
-    
     app.regions.push({ x, y, area: areaM2, type: app.mode });
-    drawRegions();
-    updateResultUI();
+    drawRegions(); updateResultUI();
 }
 
 function drawRegions() {
     const scv = document.getElementById('selectCanvas');
     const ctx = scv.getContext('2d');
     ctx.clearRect(0,0,scv.width, scv.height);
-    
     app.regions.forEach(r => {
         ctx.fillStyle = r.type === 'wall' ? 'rgba(255,107,43,0.5)' : 'rgba(16,185,129,0.5)';
         ctx.strokeStyle = r.type === 'wall' ? '#FF6B2B' : '#10b981';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(r.x, r.y, 15, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
+        ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(r.x, r.y, 15, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     });
 }
 
@@ -378,12 +380,7 @@ function updateResultUI() {
 function saveCurrentPhoto() {
     const wall = parseFloat(document.getElementById('wallArea').textContent);
     const win = parseFloat(document.getElementById('winArea').textContent);
-    app.photos.push({
-        id: app.currentPhotoNum,
-        wallArea: wall,
-        winArea: win,
-        netArea: wall - win
-    });
+    app.photos.push({ id: app.currentPhotoNum, wallArea: wall, winArea: win, netArea: wall - win });
     showToast(`${app.currentPhotoNum}枚目の積算を保存しました`);
     document.getElementById('toListBtn').style.display = 'block';
 }
@@ -399,13 +396,12 @@ function addMorePhoto() {
     switchMode('measuring');
 }
 
-// --- List & GAS ---
 function renderList() {
     const list = document.getElementById('photoList');
     list.innerHTML = app.photos.map(p => `
-        <div style="background: var(--bg3); padding: 10px; border-radius: 8px; margin-bottom: 5px; display: flex; justify-content: space-between;">
+        <div style="background: var(--bg3); padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; border: 1px solid var(--border);">
             <span>${p.id}枚目の写真</span>
-            <span>外壁: ${p.wallArea.toFixed(1)} / 除外: ${p.winArea.toFixed(1)} / <b>正味: ${p.netArea.toFixed(1)}m²</b></span>
+            <span>外壁:${p.wallArea.toFixed(1)} / 除外:${p.winArea.toFixed(1)} / <b>正味:${p.netArea.toFixed(1)}m²</b></span>
         </div>
     `).join('');
 }
@@ -416,37 +412,31 @@ function renderConfirm() {
     div.innerHTML = `
         <p>案件番号: ${app.session.projectNum}</p>
         <p>依頼主: ${app.session.clientName}</p>
+        <p>現場住所: ${app.session.address || '-'}</p>
         <p>写真枚数: ${app.photos.length} 枚</p>
-        <hr style="margin: 10px 0; border: var(--border);">
-        <p style="font-size: 18px;">合計塗装面積: <b style="color: var(--orange);">${total.toFixed(1)} m²</b></p>
+        <hr style="margin: 10px 0; border-color: var(--border);">
+        <p style="font-size: 20px; font-weight: 800; color: var(--orange);">合計塗装面積: ${total.toFixed(1)} m²</p>
     `;
 }
 
 async function sendToGAS() {
-    const gasId = document.getElementById('gasId').value;
-    if (!gasId) return showToast("GASのIDを設定してください");
-    
+    const gasUrl = document.getElementById('gasId').value.trim();
+    if (!gasUrl) return showToast("GASのWebApp URLを設定してください");
     const btn = document.getElementById('gasSubmitBtn');
-    btn.disabled = true;
-    showToast("スプレッドシートに送信中...");
+    btn.disabled = true; showToast("送信中...");
     
-    const payload = { ...app.session, totalArea: app.photos.reduce((s,p)=>s+p.netArea,0), photoCount: app.photos.length };
+    const payload = { ...app.session, totalArea: app.photos.reduce((s,p)=>s+p.netArea,0), photoCount: app.photos.length, timestamp: new Date().toISOString() };
     
     try {
-        await fetch(`https://script.google.com/macros/s/${gasId}/exec`, {
-            method: 'POST',
-            mode: 'no-cors',
-            body: JSON.stringify(payload)
-        });
-        showToast("送信完了しました！案件台帳を確認してください");
-        setTimeout(() => location.reload(), 2000);
+        await fetch(gasUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
+        showToast("スプレッドシートへの登録が完了しました！");
+        setTimeout(() => location.reload(), 2500);
     } catch (e) {
-        showToast("送信に失敗しました。IDを確認してください");
+        showToast("送信失敗: " + e.message);
         btn.disabled = false;
     }
 }
 
-// --- Helpers ---
 function setMode(m) {
     app.mode = m;
     document.getElementById('typeWall').classList.toggle('active', m === 'wall');
@@ -458,7 +448,7 @@ function openSettings() { document.getElementById('settingsModal').classList.add
 function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
 function showToast(m) {
     const t = document.createElement('div'); t.className = 'toast'; t.textContent = m;
-    document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
+    document.body.appendChild(t); setTimeout(() => t.remove(), 3500);
 }
 </script>
 </body>
