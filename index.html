@@ -26,8 +26,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Noto S
 .canvas-area{flex:1;background:var(--bg);overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:16px}
 .sec{padding:14px;border-bottom:1px solid var(--border)}
 .sec-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:10px}
-input[type=number],input[type=password],input[type=text]{width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:13px;font-family:inherit;outline:none;-webkit-appearance:none;transition:border .2s}
-input[type=number]:focus,input[type=password]:focus,input[type=text]:focus{border-color:var(--blue)}
+input[type=number]{width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-size:13px;font-family:inherit;outline:none;-webkit-appearance:none;transition:border .2s}
+input[type=number]:focus{border-color:var(--blue)}
 input[type=range]{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:var(--border2);cursor:pointer;margin:6px 0;outline:none}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--orange);cursor:pointer}
 .upload-zone{padding:18px 12px;border-radius:10px;border:2px dashed var(--border2);cursor:pointer;text-align:center;color:var(--muted);font-size:13px;transition:all .2s;display:block}
@@ -82,6 +82,59 @@ canvas{border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.8);display:block;tou
 #overlayCanvas{position:absolute;top:0;left:0;border-radius:10px;pointer-events:none}
 #buildingCanvas{position:absolute;top:0;left:0;border-radius:10px;pointer-events:none}
 #selectCanvas{position:absolute;top:0;left:0;border-radius:10px;pointer-events:none}
+
+/* ── SETTINGS MODAL ── */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;padding:16px}
+.modal.open{display:flex}
+.modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:20px;width:100%;max-width:380px;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:14px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.modal-close{margin-left:auto;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 4px}
+.modal-save-btn{width:100%;padding:10px;border-radius:9px;border:none;background:var(--blue);color:#fff;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:14px}
+.modal-save-btn:hover{background:#2563eb}
+.gas-status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--muted2);margin-right:5px;vertical-align:middle}
+.gas-status-dot.set{background:var(--green)}
+.gas-url-input{font-size:11px;letter-spacing:.02em}
+.gas-missing{padding:8px 10px;border-radius:7px;background:#1a0000;border:1px solid rgba(239,68,68,.3);font-size:11px;color:#f87171;margin-top:8px;line-height:1.7}
+.field-label{font-size:10px;font-weight:700;color:var(--muted);margin-bottom:5px;margin-top:10px;display:block}
+
+/* ── SAVE / 案件台帳 ── */
+.project-num-wrap{position:relative;margin-bottom:0}
+.project-num-input{padding-right:82px!important;font-family:'Syne',sans-serif!important;font-size:15px!important;font-weight:700!important;letter-spacing:.04em;color:var(--orange)!important;border-color:rgba(255,107,43,.4)!important}
+.project-num-input:focus{border-color:var(--orange)!important}
+.num-auto-badge{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:9px;font-weight:700;padding:3px 8px;border-radius:10px;background:#2a1000;border:1px solid rgba(255,107,43,.4);color:#fb923c;cursor:pointer;white-space:nowrap;transition:all .2s}
+.num-auto-badge:hover{background:#3a1800;border-color:var(--orange)}
+.num-hint{font-size:9px;color:var(--muted2);margin-top:3px;margin-bottom:10px}
+
+/* アコーディオンブロック */
+.ledger-block{background:var(--bg3);border-radius:10px;border:1px solid var(--border2);overflow:hidden;margin-bottom:8px}
+.ledger-head{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;cursor:pointer;user-select:none;transition:background .2s}
+.ledger-head:hover{background:rgba(255,255,255,.04)}
+.ledger-title{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;color:var(--text)}
+.ledger-arrow{font-size:10px;color:var(--muted);transition:transform .2s}
+.ledger-body{padding:10px 12px 12px;border-top:1px solid var(--border)}
+.ledger-body.closed{display:none}
+.field-row{display:flex;gap:6px}
+.field-row .fg{flex:1}
+.fg{margin-bottom:8px}
+.fg:last-child{margin-bottom:0}
+.fg label{font-size:10px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px}
+.fg input,.fg select,.fg textarea{width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:12px;font-family:inherit;outline:none;transition:border .2s;resize:none}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--blue)}
+.fg select{-webkit-appearance:none;cursor:pointer}
+.req{color:#ef4444;margin-left:2px}
+
+/* 保存ボタン */
+.save-btn{width:100%;padding:13px;border-radius:10px;border:none;background:linear-gradient(135deg,#064e3b,#065f46);color:#fff;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;margin-top:10px}
+.save-btn:hover{background:linear-gradient(135deg,#065f46,#047857);transform:translateY(-1px)}
+.save-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.save-status{display:none;padding:9px 12px;border-radius:8px;font-size:11px;margin-top:8px;text-align:center;line-height:1.7}
+.save-status.ok{background:#0a2015;border:1px solid rgba(34,197,94,.3);color:#4ade80}
+.save-status.err{background:#1a0000;border:1px solid rgba(239,68,68,.3);color:#f87171}
+.save-status.sending{background:#1a1f35;border:1px solid #2a3060;color:#60a5fa}
+
+/* ヘッダーの設定ボタン */
+.settings-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.settings-btn:hover{border-color:var(--border);color:var(--text)}
 </style>
 </head>
 <body>
@@ -92,6 +145,7 @@ canvas{border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.8);display:block;tou
     <p id="ppmInfo">AI建物検出 ＋ スマート選択</p>
   </div>
   <div class="badge">✨ AI DETECT</div>
+  <button class="settings-btn" onclick="openSettings()" title="設定">⚙️</button>
 </div>
 <div class="steps">
   <div class="step active" id="s1"><span class="num">1</span>画像アップ</div>
@@ -217,6 +271,120 @@ canvas{border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.8);display:block;tou
       <div id="regionList"></div>
     </div>
 
+
+    <!-- ★ STEP 6: 案件台帳 ＋ 保存 -->
+    <div class="sec" id="saveSec" style="display:none">
+      <div class="sec-title">📋 案件台帳 ＋ 積算保存</div>
+
+      <!-- 案件番号 -->
+      <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:5px">案件番号<span class="req">*</span></div>
+      <div class="project-num-wrap">
+        <input type="text" id="projectNum" class="project-num-input" placeholder="NK-2026-001">
+        <span class="num-auto-badge" onclick="refreshNum()">🔄 採番</span>
+      </div>
+      <div class="num-hint">自動採番（NK-年-連番） / 手動上書き可。🔄で再採番。</div>
+
+      <!-- 依頼主情報 -->
+      <div class="ledger-block">
+        <div class="ledger-head" onclick="toggleBlock('b-client')">
+          <div class="ledger-title">👤 依頼主情報<span class="req">*</span></div>
+          <div class="ledger-arrow" id="b-client-arrow">▼</div>
+        </div>
+        <div class="ledger-body" id="b-client">
+          <div class="fg">
+            <label>依頼主名（施主）<span class="req">*</span></label>
+            <input type="text" id="clientName" placeholder="例: 田中 太郎">
+          </div>
+          <div class="field-row">
+            <div class="fg">
+              <label>電話番号</label>
+              <input type="text" id="clientTel" placeholder="090-xxxx-xxxx" inputmode="tel">
+            </div>
+            <div class="fg">
+              <label>メール</label>
+              <input type="text" id="clientEmail" placeholder="xxx@example.com" inputmode="email">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 現場情報 -->
+      <div class="ledger-block">
+        <div class="ledger-head" onclick="toggleBlock('b-site')">
+          <div class="ledger-title">🏠 現場情報</div>
+          <div class="ledger-arrow" id="b-site-arrow">▼</div>
+        </div>
+        <div class="ledger-body" id="b-site">
+          <div class="fg">
+            <label>現場住所</label>
+            <input type="text" id="siteAddress" placeholder="例: 静岡県浜松市...">
+          </div>
+          <div class="field-row">
+            <div class="fg">
+              <label>建物種別</label>
+              <select id="buildingType">
+                <option value="">選択...</option>
+                <option>戸建て</option>
+                <option>マンション</option>
+                <option>アパート</option>
+                <option>店舗</option>
+                <option>工場・倉庫</option>
+                <option>その他</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label>階数</label>
+              <select id="buildingFloors">
+                <option value="">—</option>
+                <option>平屋</option>
+                <option>2階建て</option>
+                <option>3階建て</option>
+                <option>4階以上</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 工事・担当 -->
+      <div class="ledger-block">
+        <div class="ledger-head" onclick="toggleBlock('b-work')">
+          <div class="ledger-title">🔧 工事・担当情報</div>
+          <div class="ledger-arrow" id="b-work-arrow">▼</div>
+        </div>
+        <div class="ledger-body" id="b-work">
+          <div class="field-row">
+            <div class="fg">
+              <label>工事種別</label>
+              <select id="workType">
+                <option>外壁塗装</option>
+                <option>屋根塗装</option>
+                <option>外壁＋屋根</option>
+                <option>足場工事</option>
+                <option>その他</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label>担当者</label>
+              <input type="text" id="staffName" placeholder="例: 仲村">
+            </div>
+          </div>
+          <div class="fg">
+            <label>備考・メモ</label>
+            <textarea id="projectNote" placeholder="現場状況・特記事項など" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div id="gasWarning" class="gas-missing" style="display:none">
+        ⚠️ GAS URLが未設定です。右上の⚙️から設定してください
+      </div>
+      <button class="save-btn" id="saveBtn" onclick="saveToSheets()">
+        📊 スプレッドシートに保存
+      </button>
+      <div class="save-status" id="saveStatus"></div>
+    </div>
+
     <div class="sec">
       <div style="font-size:10px;color:var(--muted);line-height:2.2">
         <div style="font-weight:700;color:var(--text);margin-bottom:4px">📖 使い方</div>
@@ -225,10 +393,11 @@ canvas{border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,.8);display:block;tou
         <div>③ スケール設定（A→B）</div>
         <div>④ 外壁の中心をタップ</div>
         <div>⑤ 窓・扉をタップ</div>
+        <div>⑥ 依頼主情報を入力して保存</div>
         <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border2);color:#c084fc">
           ✨ <b>AI DETECT</b>方式<br>
           Claude AIが建物を自動認識<br>
-          建物の外には選択不可
+          <span style="color:#4ade80">📊 右上⚙️でGAS URL設定後<br>スプレッドシートに自動保存</span>
         </div>
       </div>
     </div>
@@ -300,20 +469,11 @@ function runAIDetect(){
 
   var prompt='この建物の写真を見て、建物（壁・窓・ドアなどを含む建物全体）の外形輪郭を多角形のポリゴンで返してください。\n\n必ず以下のJSON形式のみで返してください（説明文は不要）:\n{"points":[[x1,y1],[x2,y2],[x3,y3],...,[xn,yn]]}\n\nxとyは画像の幅・高さに対する割合（0.0〜1.0）で表してください。建物全体を囲む輪郭を、最低6点・最大30点で表してください。空や地面・木・車などは含めないでください。';
 
-  var apiKey = document.getElementById('apiKeyInput').value.trim().replace(/[^ -~]/g, '');
+  var apiKey = document.getElementById('apiKeyInput').value.trim();
   if(!apiKey){
     hide('aiProgress');
     btn.disabled=false;
     document.getElementById('aiError').textContent='APIキーを入力してください。';
-    show('aiError');
-    return;
-  }
-
-  // Check if running from file:// protocol (CORS will fail)
-  if(window.location.protocol === 'file:') {
-    hide('aiProgress');
-    btn.disabled=false;
-    document.getElementById('aiError').innerHTML='⚠️ <b>ファイルを直接開いているため通信できません。</b><br><br>解決方法：<br>① VSCode の「Live Server」拡張でHTTPサーバーから開く<br>② または <code style="background:#2a0a0a;padding:2px 5px;border-radius:4px">python -m http.server 8080</code> を実行して <a href="http://localhost:8080" target="_blank" style="color:#a78bfa">http://localhost:8080</a> で開く';
     show('aiError');
     return;
   }
@@ -327,7 +487,7 @@ function runAIDetect(){
       'anthropic-dangerous-direct-browser-access': 'true'
     },
     body:JSON.stringify({
-      model:'claude-sonnet-4-6',
+      model:'claude-sonnet-4-20250514',
       max_tokens:1000,
       messages:[{
         role:'user',
@@ -372,11 +532,7 @@ function runAIDetect(){
   .catch(function(e){
     hide('aiProgress');
     btn.disabled=false;
-    var msg='通信エラー: '+e.message;
-    if(e.message==='Failed to fetch'){
-      msg='通信エラー: APIへの接続がブロックされました。<br>・APIキーを確認してください<br>・ブラウザの拡張機能（広告ブロッカー等）を無効にしてみてください<br>・HTTPサーバー経由で開いているか確認してください';
-    }
-    document.getElementById('aiError').innerHTML=msg;
+    document.getElementById('aiError').textContent='通信エラー: '+e.message;
     show('aiError');
   });
 }
@@ -725,10 +881,17 @@ function updateResults(){
       '</div>'+
       '<div style="display:flex;align-items:center;gap:8px">'+
         '<span style="font-size:11px;font-weight:700;color:'+col+'">'+m2+'m²</span>'+
-        '<button class="del-btn" onclick="deleteRegion('+i+')">&#x2715;</button>'+
+        '<button class="del-btn" onclick="deleteRegion('+i+')">✕</button>'+
       '</div></div>';
   }).join('');
 }
+
+// ── showSaveSec呼び出し ──
+var _origUpdateResults = updateResults;
+updateResults = function(){
+  _origUpdateResults();
+  showSaveSec();
+};
 
 function deleteRegion(i){regions.splice(i,1);if(!regions.length){hide('resultSec');goStep('select');}else updateResults();drawSelections();}
 function undoLast(){if(!regions.length)return;regions.pop();if(!regions.length){hide('resultSec');goStep('select');}else updateResults();drawSelections();}
@@ -738,6 +901,182 @@ function resetPts(){setPtUI('ptA',null);setPtUI('ptB',null);}
 function resetScale(){scalePts=[];ppm=null;resetPts();document.getElementById('scaleDone').style.display='none';goStep('scale');drawSelections();}
 function show(id){document.getElementById(id).style.display='block';}
 function hide(id){document.getElementById(id).style.display='none';}
+
+// ── ⚙️ 設定 ──────────────────────────────────────────────────
+var gasUrl = '', sheetUrl = '';
+
+function loadSettings(){
+  gasUrl   = localStorage.getItem('gasUrl')    || '';
+  sheetUrl = localStorage.getItem('sheetUrl')  || '';
+  var pfx  = localStorage.getItem('projPrefix') || 'NK';
+  var el;
+  if((el=document.getElementById('gasUrlInput')))   el.value = gasUrl;
+  if((el=document.getElementById('sheetUrlInput'))) el.value = sheetUrl;
+  if((el=document.getElementById('prefixInput')))   el.value = pfx;
+  var dot = document.getElementById('gasStatusDot');
+  if(dot) dot.className = 'gas-status-dot' + (gasUrl ? ' set' : '');
+}
+function saveSettings(){
+  gasUrl   = (document.getElementById('gasUrlInput').value || '').trim();
+  sheetUrl = (document.getElementById('sheetUrlInput').value || '').trim();
+  var pfx  = (document.getElementById('prefixInput').value || '').trim().toUpperCase() || 'NK';
+  localStorage.setItem('gasUrl', gasUrl);
+  localStorage.setItem('sheetUrl', sheetUrl);
+  localStorage.setItem('projPrefix', pfx);
+  var dot = document.getElementById('gasStatusDot');
+  if(dot) dot.className = 'gas-status-dot' + (gasUrl ? ' set' : '');
+  closeSettings();
+  updateGasWarning();
+  // 採番表示を更新
+  var numEl = document.getElementById('projectNum');
+  if(numEl) numEl.value = buildNum();
+}
+function openSettings(){ loadSettings(); document.getElementById('settingsModal').classList.add('open'); }
+function closeSettings(){ document.getElementById('settingsModal').classList.remove('open'); }
+function closeModalOuter(e){ if(e.target === document.getElementById('settingsModal')) closeSettings(); }
+function openSheet(){
+  var url = (document.getElementById('sheetUrlInput').value || '').trim() || sheetUrl;
+  if(!url){ alert('スプレッドシートURLを設定してください'); return; }
+  window.open(url, '_blank');
+}
+function updateGasWarning(){
+  var w = document.getElementById('gasWarning');
+  if(w) w.style.display = gasUrl ? 'none' : 'block';
+}
+
+// ── 案件番号採番 ──────────────────────────────────────────────
+function buildNum(){
+  var year = new Date().getFullYear();
+  var pfx  = localStorage.getItem('projPrefix') || 'NK';
+  var seq  = (parseInt(localStorage.getItem('projSeq_' + year)) || 0) + 1;
+  return pfx + '-' + year + '-' + String(seq).padStart(3, '0');
+}
+function refreshNum(){
+  document.getElementById('projectNum').value = buildNum();
+}
+function commitNum(){
+  var year = new Date().getFullYear();
+  var key  = 'projSeq_' + year;
+  localStorage.setItem(key, (parseInt(localStorage.getItem(key)) || 0) + 1);
+}
+
+// ── アコーディオン ─────────────────────────────────────────────
+function toggleBlock(id){
+  var body  = document.getElementById(id);
+  var arrow = document.getElementById(id + '-arrow');
+  if(body.classList.toggle('closed')){
+    arrow.textContent = '▶';
+  } else {
+    arrow.textContent = '▼';
+  }
+}
+
+// ── 積算完了時にsaveSecを表示 ─────────────────────────────────
+function showSaveSec(){
+  var sec = document.getElementById('saveSec');
+  if(sec && sec.style.display === 'none'){
+    sec.style.display = 'block';
+    // 初回表示時に採番をセット
+    var numEl = document.getElementById('projectNum');
+    if(numEl && !numEl.value) numEl.value = buildNum();
+    updateGasWarning();
+  }
+}
+
+// ── スプレッドシートに保存 ─────────────────────────────────────
+function saveToSheets(){
+  if(!ppm || !regions.length){ alert('先に積算を完了してください'); return; }
+  var num  = (document.getElementById('projectNum').value || '').trim();
+  var name = (document.getElementById('clientName').value || '').trim();
+  if(!num)  { document.getElementById('projectNum').focus(); alert('案件番号を入力してください'); return; }
+  if(!name) { document.getElementById('clientName').focus(); alert('依頼主名を入力してください'); return; }
+  if(!gasUrl){ openSettings(); return; }
+
+  var wb = regions.filter(function(r){ return r.type === 'wall'; });
+  var gb = regions.filter(function(r){ return r.type === 'window'; });
+  var wt = wb.reduce(function(s,r){ return s + r.pixCount/(ppm*ppm); }, 0) / 1e6;
+  var gt = gb.reduce(function(s,r){ return s + r.pixCount/(ppm*ppm); }, 0) / 1e6;
+
+  var now   = new Date();
+  var dateS = now.getFullYear() + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + String(now.getDate()).padStart(2,'0');
+  var timeS = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+
+  var payload = {
+    projectNum    : num,
+    date          : dateS,
+    time          : timeS,
+    clientName    : name,
+    clientTel     : (document.getElementById('clientTel').value || '').trim(),
+    clientEmail   : (document.getElementById('clientEmail').value || '').trim(),
+    siteAddress   : (document.getElementById('siteAddress').value || '').trim(),
+    buildingType  : document.getElementById('buildingType').value,
+    buildingFloors: document.getElementById('buildingFloors').value,
+    workType      : document.getElementById('workType').value,
+    staff         : (document.getElementById('staffName').value || '').trim(),
+    wallArea      : wt.toFixed(3),
+    winArea       : gt.toFixed(3),
+    netArea       : (wt - gt).toFixed(3),
+    wallCount     : wb.length,
+    winCount      : gb.length,
+    note          : (document.getElementById('projectNote').value || '').trim()
+  };
+
+  var btn = document.getElementById('saveBtn');
+  var st  = document.getElementById('saveStatus');
+  btn.disabled = true;
+  st.className = 'save-status sending';
+  st.textContent = '📡 送信中...';
+  st.style.display = 'block';
+
+  fetch(gasUrl, {
+    method : 'POST',
+    mode   : 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body   : JSON.stringify(payload)
+  }).then(function(){
+    btn.disabled = false;
+    commitNum();
+    st.className = 'save-status ok';
+    st.innerHTML = '✅ 保存しました！<br><span style="color:#86efac;font-size:10px">' + num + ' ' + name + ' （' + dateS + '）</span>';
+    document.getElementById('projectNote').value = '';
+    document.getElementById('projectNum').value  = buildNum();
+  }).catch(function(e){
+    btn.disabled = false;
+    st.className = 'save-status err';
+    st.innerHTML = '❌ 送信エラー<br><span style="font-size:10px">' + e.message + '</span>';
+  });
+}
+
+// ── 初期化 ────────────────────────────────────────────────────
+loadSettings();
+
 </script>
+
+<!-- ⚙️ 設定モーダル -->
+<div class="modal" id="settingsModal" onclick="closeModalOuter(event)">
+  <div class="modal-box">
+    <div class="modal-title">
+      ⚙️ 設定
+      <button class="modal-close" onclick="closeSettings()">✕</button>
+    </div>
+
+    <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:5px">案件番号プレフィックス</div>
+    <input type="text" id="prefixInput" placeholder="NK" style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.05em" maxlength="5">
+    <div style="font-size:10px;color:var(--muted2);margin-top:4px;margin-bottom:14px;line-height:1.7">会社略称など（例: NK → NK-2026-001）</div>
+
+    <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:5px">
+      <span class="gas-status-dot" id="gasStatusDot"></span>Google Apps Script URL
+    </div>
+    <input type="text" id="gasUrlInput" class="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec">
+    <div style="font-size:10px;color:var(--muted2);margin-top:5px;margin-bottom:14px;line-height:1.8">GASをデプロイした後のURLを貼り付けてください</div>
+
+    <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:5px">スプレッドシートURL（任意）</div>
+    <input type="text" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/...">
+    <button onclick="openSheet()" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted);font-size:11px;font-family:inherit;cursor:pointer;margin-top:6px">📊 スプレッドシートを開く</button>
+
+    <button class="modal-save-btn" onclick="saveSettings()">✅ 保存</button>
+  </div>
+</div>
+
 </body>
 </html>
