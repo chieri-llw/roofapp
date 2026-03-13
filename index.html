@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>外壁塗装積算システム - Gemini AI Detect v3.1</title>
+    <title>外壁塗装積算システム - Gemini AI Detect v3.2</title>
     <style>
         :root {
             --bg: #0a0c10; --bg2: #111318; --bg3: #1a1d24; --border: #252830; 
@@ -59,7 +59,7 @@
 <body>
 
 <div class="header">
-    <h1>外壁塗装積算システム <span style="font-size: 10px; color: var(--muted);">Gemini Detect v3.1</span></h1>
+    <h1>外壁塗装積算システム <span style="font-size: 10px; color: var(--muted);">Gemini Detect v3.2</span></h1>
     <button class="btn btn-secondary" onclick="openSettings()" style="padding: 8px 12px;">⚙️ 設定</button>
 </div>
 
@@ -238,7 +238,7 @@ function initCanvas(img) {
     updateResultUI();
 }
 
-// --- Gemini AI解析 (修正版エンドポイント) ---
+// --- Gemini AI解析 (v1beta エンドポイント修正版) ---
 async function runAIDetect() {
     const key = document.getElementById('apiKey').value.trim();
     if (!key) return showToast("Gemini APIキーを設定してください");
@@ -250,10 +250,10 @@ async function runAIDetect() {
     const canvas = document.getElementById('photoCanvas');
     const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
     
-    // v1 安定版エンドポイントを使用
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
+    // v1beta エンドポイントを使用し、モデル指定を修正
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
     
-    const prompt = 'Detect the boundary of the main building in this image. Return the result as a JSON object with a "points" array containing [y, x] coordinate pairs (normalized 0-1000). Use around 15-20 points. Return ONLY the JSON object.';
+    const prompt = 'Detect the boundary of the main building in this image. Return a JSON object with a "points" array of [y, x] coordinates (normalized 0-1000). Use around 15-20 points. Return ONLY JSON. Example: {"points": [[100, 200], [150, 250]]}';
 
     try {
         const res = await fetch(url, {
@@ -265,19 +265,27 @@ async function runAIDetect() {
         });
         
         const data = await res.json();
-        if (data.error) throw new Error(data.error.message);
+        
+        if (data.error) {
+            throw new Error(data.error.message || "APIエラーが発生しました");
+        }
+
+        if (!data.candidates || data.candidates.length === 0) {
+            throw new Error("AIから応答がありませんでした");
+        }
 
         const text = data.candidates[0].content.parts[0].text;
-        const jsonStr = text.match(/\{.*\}/s)[0];
-        const json = JSON.parse(jsonStr);
+        const jsonMatch = text.match(/\{.*\}/s);
+        if (!jsonMatch) throw new Error("応答データがJSON形式ではありません");
         
-        // 座標変換 [y, x] (0-1000) -> [x, y] (0.0-1.0)
+        const json = JSON.parse(jsonMatch[0]);
+        // [y, x] (0-1000) -> [x, y] (0.0-1.0)
         const points = json.points.map(p => [p[1]/1000, p[0]/1000]); 
         applyBuildingMask(points);
         showToast("検出成功！建物エリアをロックしました");
     } catch (e) {
         console.error(e);
-        showToast("AI解析失敗。キーの有効性や画像を確認してください");
+        showToast("AI解析失敗: " + e.message);
     } finally { btn.disabled = false; }
 }
 
@@ -316,7 +324,6 @@ function applyBuildingMask(points) {
     ctx.strokeStyle = '#8b5cf6'; ctx.lineWidth = 3; ctx.setLineDash([5, 5]); ctx.stroke();
 }
 
-// --- クリック処理と積算 ---
 function handleCanvasClick(e) {
     const scv = document.getElementById('selectCanvas');
     const rect = scv.getBoundingClientRect();
@@ -357,7 +364,7 @@ function saveCurrentPhoto() {
     const wall = parseFloat(document.getElementById('wallArea').textContent);
     const win = parseFloat(document.getElementById('winArea').textContent);
     app.photos.push({ id: app.currentPhotoNum, wallArea: wall, winArea: win, netArea: wall - win });
-    showToast(`${app.currentPhotoNum}枚目を保存しました`);
+    showToast(`${app.currentPhotoNum}枚目の積算を保存しました`);
     document.getElementById('toListBtn').style.display = 'block';
 }
 
@@ -392,7 +399,6 @@ function renderConfirm() {
     `;
 }
 
-// --- 外部連携 (GAS) ---
 async function sendToGAS() {
     const gasUrl = document.getElementById('gasId').value.trim();
     if (!gasUrl) return showToast("GASのWebApp URLを設定してください");
