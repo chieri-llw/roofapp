@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>外壁塗装積算システム - AI Detect v2.2 Final</title>
+    <title>外壁塗装積算システム - Gemini AI Detect</title>
     <style>
         :root {
             --bg: #0a0c10; --bg2: #111318; --bg3: #1a1d24; --border: #252830; 
@@ -26,7 +26,7 @@
         input, select, textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg3); color: #fff; font-size: 14px; outline: none; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 
-        .canvas-container { position: relative; margin: 20px 0; background: #000; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
+        .canvas-container { position: relative; margin: 20px 0; background: #000; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; align-items: center; min-height: 200px; }
         canvas { max-width: 100%; height: auto; display: block; }
         #buildingCanvas, #selectCanvas { position: absolute; top: 0; left: 50%; transform: translateX(-50%); pointer-events: none; }
         #selectCanvas { pointer-events: auto; cursor: crosshair; }
@@ -59,7 +59,7 @@
 <body>
 
 <div class="header">
-    <h1>外壁塗装積算システム <span style="font-size: 10px; color: var(--muted);">AI Detect v2.2</span></h1>
+    <h1>外壁塗装積算システム <span style="font-size: 10px; color: var(--muted);">Gemini Detect v3.0</span></h1>
     <button class="btn btn-secondary" onclick="openSettings()" style="padding: 8px 12px;">⚙️ 設定</button>
 </div>
 
@@ -67,10 +67,7 @@
     <div class="content">
         <div class="panel active" id="setupSection">
             <h2 style="margin-bottom: 20px;">案件情報入力</h2>
-            <div class="form-group">
-                <label>依頼主名 *</label>
-                <input type="text" id="clientName" placeholder="例: 田中様">
-            </div>
+            <div class="form-group"><label>依頼主名 *</label><input type="text" id="clientName" placeholder="例: 田中様"></div>
             <div class="form-row">
                 <div class="form-group"><label>現場住所 *</label><input type="text" id="siteAddress"></div>
                 <div class="form-group"><label>担当者</label><input type="text" id="staff"></div>
@@ -84,7 +81,7 @@
                 <span id="displayPhotoNum" style="color: var(--purple); font-weight: 800;">1枚目</span>
             </div>
 
-            <div id="uploadZone" onclick="triggerFileInput()" style="border: 2px dashed var(--border); padding: 40px; text-align: center; cursor: pointer; border-radius: 10px; background: var(--bg3);">
+            <div id="uploadZone" onclick="document.getElementById('photoInput').click()" style="border: 2px dashed var(--border); padding: 40px; text-align: center; cursor: pointer; border-radius: 10px; background: var(--bg3);">
                 <span style="font-size: 40px;">📷</span><br>建物写真を選択してください
                 <input type="file" id="photoInput" hidden onchange="handleFile(this)">
             </div>
@@ -101,7 +98,7 @@
                     <button class="type-btn win" id="typeWin" onclick="setMode('window')">🟢 窓・除外</button>
                 </div>
                 <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                    <button class="btn btn-orange" id="aiBtn" onclick="runAIDetect()" style="flex: 2;">✨ AI建物検出</button>
+                    <button class="btn btn-orange" id="aiBtn" onclick="runAIDetect()" style="flex: 2;">✨ Geminiで建物検出</button>
                     <button class="btn btn-secondary" onclick="undo()" style="flex: 1;">↩ 戻す</button>
                     <button class="btn btn-secondary" onclick="resetCanvas()" style="flex: 1;">🗑 クリア</button>
                 </div>
@@ -133,7 +130,7 @@
             <div id="confirmData" style="background: var(--bg3); padding: 15px; border-radius: 8px; margin: 20px 0; font-size: 14px;"></div>
             <div style="display: flex; gap: 10px;">
                 <button class="btn btn-secondary" onclick="switchMode('review')">戻る</button>
-                <button class="btn btn-primary" onclick="sendToGAS()" id="gasSubmitBtn">スプレッドシートに送信</button>
+                <button class="btn btn-primary" onclick="sendToGAS()" id="gasSubmitBtn">GASへ送信</button>
             </div>
         </div>
     </div>
@@ -142,8 +139,8 @@
 <div class="modal" id="settingsModal">
     <div class="modal-content">
         <h3 style="margin-bottom: 20px;">システム設定</h3>
-        <div class="form-group"><label>Claude API Key</label><input type="password" id="apiKey"></div>
-        <div class="form-group"><label>GAS WebApp URL</label><input type="text" id="gasId"></div>
+        <div class="form-group"><label>Gemini API Key</label><input type="password" id="apiKey" placeholder="AI Studioのキーを入力"></div>
+        <div class="form-group"><label>GAS WebApp URL</label><input type="text" id="gasId" placeholder="https://script.google.com/macros/s/.../exec"></div>
         <div class="form-group"><label>基準スケール (px/m)</label><input type="number" id="scale" value="100"></div>
         <div style="display: flex; gap: 10px; margin-top: 20px;">
             <button class="btn btn-secondary" onclick="closeSettings()" style="flex: 1;">閉じる</button>
@@ -158,7 +155,7 @@ let app = {
     buildingMask: null, regions: [], ppm: 100
 };
 
-// --- Initialization ---
+// --- Settings ---
 window.onload = () => {
     const saved = localStorage.getItem('roofapp_settings');
     if (saved) {
@@ -180,10 +177,6 @@ function saveSettings() {
     app.ppm = s.scale;
     closeSettings();
     showToast("設定を保存しました");
-}
-
-function triggerFileInput() {
-    document.getElementById('photoInput').click();
 }
 
 function startProject() {
@@ -211,83 +204,74 @@ function handleFile(input) {
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
-        img.onload = () => {
-            const cv = document.getElementById('photoCanvas');
-            const bcv = document.getElementById('buildingCanvas');
-            const scv = document.getElementById('selectCanvas');
-            const wrap = document.getElementById('canvasWrap');
-            
-            // 計算を確実に
-            const maxW = document.querySelector('.content').clientWidth - 40;
-            const scale = maxW / img.width;
-            const W = Math.round(img.width * scale);
-            const H = Math.round(img.height * scale);
-            
-            [cv, bcv, scv].forEach(c => { 
-                c.width = W; 
-                c.height = H;
-                c.style.width = W + 'px';
-                c.style.height = H + 'px';
-            });
-            
-            cv.getContext('2d').drawImage(img, 0, 0, W, H);
-            
-            wrap.style.display = 'flex';
-            document.getElementById('uploadZone').style.display = 'none';
-            document.getElementById('toolBar').style.display = 'block';
-            
-            scv.onclick = (ev) => handleCanvasClick(ev);
-            
-            app.regions = []; app.buildingMask = null;
-            bcv.getContext('2d').clearRect(0,0,W,H);
-            scv.getContext('2d').clearRect(0,0,W,H);
-            updateResultUI();
-        };
+        img.onload = () => initCanvas(img);
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
 }
 
-// --- AI Detect ---
+function initCanvas(img) {
+    const cv = document.getElementById('photoCanvas');
+    const bcv = document.getElementById('buildingCanvas');
+    const scv = document.getElementById('selectCanvas');
+    const wrap = document.getElementById('canvasWrap');
+    
+    const maxW = document.querySelector('.content').clientWidth - 40;
+    const scale = maxW / img.width;
+    const W = Math.round(img.width * scale);
+    const H = Math.round(img.height * scale);
+    
+    [cv, bcv, scv].forEach(c => { 
+        c.width = W; c.height = H;
+        c.style.width = W + 'px'; c.style.height = H + 'px';
+    });
+    
+    cv.getContext('2d').drawImage(img, 0, 0, W, H);
+    wrap.style.display = 'flex';
+    document.getElementById('uploadZone').style.display = 'none';
+    document.getElementById('toolBar').style.display = 'block';
+    
+    scv.onclick = (e) => handleCanvasClick(e);
+    app.regions = []; app.buildingMask = null;
+    bcv.getContext('2d').clearRect(0,0,W,H);
+    scv.getContext('2d').clearRect(0,0,W,H);
+    updateResultUI();
+}
+
+// --- Gemini AI Detect (NEW!) ---
 async function runAIDetect() {
     const key = document.getElementById('apiKey').value.trim();
-    if (!key) return showToast("設定からAPIキーを入力してください");
+    if (!key) return showToast("Gemini APIキーを設定してください");
     
-    const canvas = document.getElementById('photoCanvas');
-    if (!canvas || canvas.width === 0) return showToast("写真を先に選択してください");
-
     const btn = document.getElementById('aiBtn');
     btn.disabled = true;
-    showToast("AI建物解析中...");
+    showToast("Gemini AIが建物を解析中...");
     
-    try {
-        const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
-        const prompt = '画像内のメインの建物全体の輪郭を検出し、JSON形式 {"points":[[x,y],...]} で返してください。x,yは0.0~1.0です。';
+    const canvas = document.getElementById('photoCanvas');
+    const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+    
+    const prompt = 'Detect the main building in this photo and return its outer boundary as a polygon in JSON format: {"points": [[y, x], ...]}. x and y should be normalized 0-1000. Use around 10-20 points. Return ONLY JSON.';
 
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
+    try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': key,
-                'anthropic-version': '2023-06-01',
-                'anthropic-dangerous-direct-browser-access': 'true'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                model: 'claude-3-5-sonnet-latest',
-                max_tokens: 1024,
-                messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } }, { type: 'text', text: prompt }] }]
+                contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: 'image/jpeg', data: base64 } }] }]
             })
         });
         
         const data = await res.json();
-        const json = JSON.parse(data.content[0].text.match(/\{.*\}/s)[0]);
-        applyBuildingMask(json.points);
-        showToast("AI検出完了！");
+        const text = data.candidates[0].content.parts[0].text;
+        const json = JSON.parse(text.match(/\{.*\}/s)[0]);
+        
+        // Gemini returns 0-1000, convert to 0.0-1.0
+        const points = json.points.map(p => [p[1]/1000, p[0]/1000]); 
+        applyBuildingMask(points);
+        showToast("検出成功！建物エリアをロックしました");
     } catch (e) {
-        showToast("失敗: " + e.message);
-    } finally {
-        btn.disabled = false;
-    }
+        showToast("AI解析失敗。キーや画像を確認してください");
+    } finally { btn.disabled = false; }
 }
 
 function applyBuildingMask(points) {
@@ -404,16 +388,12 @@ async function sendToGAS() {
     if (!gasUrl) return showToast("GASのURLを設定してください");
     const btn = document.getElementById('gasSubmitBtn');
     btn.disabled = true; showToast("送信中...");
-    
     const payload = { ...app.session, totalArea: app.photos.reduce((s,p)=>s+p.netArea,0), photoCount: app.photos.length };
-    
     try {
         await fetch(gasUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-        showToast("完了しました！");
-        setTimeout(() => location.reload(), 2000);
+        showToast("完了しました！"); setTimeout(() => location.reload(), 2000);
     } catch (e) {
-        showToast("失敗: " + e.message);
-        btn.disabled = false;
+        showToast("失敗: " + e.message); btn.disabled = false;
     }
 }
 
@@ -428,7 +408,7 @@ function openSettings() { document.getElementById('settingsModal').classList.add
 function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
 function showToast(m) {
     const t = document.createElement('div'); t.className = 'toast'; t.textContent = m;
-    document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
+    document.body.appendChild(t); setTimeout(() => t.remove(), 3500);
 }
 </script>
 </body>
