@@ -26,9 +26,9 @@
         input, select, textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg3); color: #fff; font-size: 14px; outline: none; }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 
-        .canvas-container { position: relative; margin: 20px 0; background: #000; border-radius: 8px; overflow: hidden; display: flex; justify-content: center; min-height: 200px; }
-        canvas { max-width: 100%; height: auto; }
-        #buildingCanvas, #selectCanvas { position: absolute; top: 0; left: 0; pointer-events: none; width: 100%; height: 100%; }
+        .canvas-container { position: relative; margin: 20px 0; background: #000; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
+        canvas { max-width: 100%; height: auto; display: block; }
+        #buildingCanvas, #selectCanvas { position: absolute; top: 0; left: 50%; transform: translateX(-50%); pointer-events: none; }
         #selectCanvas { pointer-events: auto; cursor: crosshair; }
 
         .btn { padding: 12px 24px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; font-family: inherit; }
@@ -84,7 +84,7 @@
                 <span id="displayPhotoNum" style="color: var(--purple); font-weight: 800;">1枚目</span>
             </div>
 
-            <div id="uploadZone" onclick="document.getElementById('photoInput').click()" style="border: 2px dashed var(--border); padding: 40px; text-align: center; cursor: pointer; border-radius: 10px; background: var(--bg3);">
+            <div id="uploadZone" onclick="triggerFileInput()" style="border: 2px dashed var(--border); padding: 40px; text-align: center; cursor: pointer; border-radius: 10px; background: var(--bg3);">
                 <span style="font-size: 40px;">📷</span><br>建物写真を選択してください
                 <input type="file" id="photoInput" hidden onchange="handleFile(this)">
             </div>
@@ -142,8 +142,8 @@
 <div class="modal" id="settingsModal">
     <div class="modal-content">
         <h3 style="margin-bottom: 20px;">システム設定</h3>
-        <div class="form-group"><label>Claude API Key (sk-ant-...)</label><input type="password" id="apiKey" placeholder="APIキーを入力"></div>
-        <div class="form-group"><label>GAS WebApp URL</label><input type="text" id="gasId" placeholder="https://script.google.com/macros/s/.../exec"></div>
+        <div class="form-group"><label>Claude API Key</label><input type="password" id="apiKey"></div>
+        <div class="form-group"><label>GAS WebApp URL</label><input type="text" id="gasId"></div>
         <div class="form-group"><label>基準スケール (px/m)</label><input type="number" id="scale" value="100"></div>
         <div style="display: flex; gap: 10px; margin-top: 20px;">
             <button class="btn btn-secondary" onclick="closeSettings()" style="flex: 1;">閉じる</button>
@@ -158,7 +158,7 @@ let app = {
     buildingMask: null, regions: [], ppm: 100
 };
 
-// --- Settings ---
+// --- Initialization ---
 window.onload = () => {
     const saved = localStorage.getItem('roofapp_settings');
     if (saved) {
@@ -182,7 +182,10 @@ function saveSettings() {
     showToast("設定を保存しました");
 }
 
-// --- Navigation ---
+function triggerFileInput() {
+    document.getElementById('photoInput').click();
+}
+
 function startProject() {
     const name = document.getElementById('clientName').value;
     if (!name) return showToast("依頼主名を入力してください");
@@ -208,59 +211,58 @@ function handleFile(input) {
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
-        img.onload = () => initCanvas(img);
+        img.onload = () => {
+            const cv = document.getElementById('photoCanvas');
+            const bcv = document.getElementById('buildingCanvas');
+            const scv = document.getElementById('selectCanvas');
+            const wrap = document.getElementById('canvasWrap');
+            
+            // 計算を確実に
+            const maxW = document.querySelector('.content').clientWidth - 40;
+            const scale = maxW / img.width;
+            const W = Math.round(img.width * scale);
+            const H = Math.round(img.height * scale);
+            
+            [cv, bcv, scv].forEach(c => { 
+                c.width = W; 
+                c.height = H;
+                c.style.width = W + 'px';
+                c.style.height = H + 'px';
+            });
+            
+            cv.getContext('2d').drawImage(img, 0, 0, W, H);
+            
+            wrap.style.display = 'flex';
+            document.getElementById('uploadZone').style.display = 'none';
+            document.getElementById('toolBar').style.display = 'block';
+            
+            scv.onclick = (ev) => handleCanvasClick(ev);
+            
+            app.regions = []; app.buildingMask = null;
+            bcv.getContext('2d').clearRect(0,0,W,H);
+            scv.getContext('2d').clearRect(0,0,W,H);
+            updateResultUI();
+        };
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
 }
 
-function initCanvas(img) {
-    const cv = document.getElementById('photoCanvas');
-    const bcv = document.getElementById('buildingCanvas');
-    const scv = document.getElementById('selectCanvas');
-    const wrap = document.getElementById('canvasWrap');
-    
-    const maxW = wrap.clientWidth;
-    const scale = maxW / img.width;
-    const W = Math.round(img.width * scale);
-    const H = Math.round(img.height * scale);
-    
-    // サイズが0になるのを防止
-    if(W === 0 || H === 0) return showToast("画像の読み込みに失敗しました");
-
-    [cv, bcv, scv].forEach(c => { c.width = W; c.height = H; });
-    cv.getContext('2d').drawImage(img, 0, 0, W, H);
-    
-    wrap.style.display = 'block';
-    document.getElementById('uploadZone').style.display = 'none';
-    document.getElementById('toolBar').style.display = 'block';
-    
-    scv.onclick = (e) => handleCanvasClick(e);
-    app.regions = []; app.buildingMask = null;
-    bcv.getContext('2d').clearRect(0,0,W,H);
-    scv.getContext('2d').clearRect(0,0,W,H);
-    updateResultUI();
-}
-
-// --- AI Detect (Fixed Image Argument Error) ---
+// --- AI Detect ---
 async function runAIDetect() {
     const key = document.getElementById('apiKey').value.trim();
     if (!key) return showToast("設定からAPIキーを入力してください");
     
     const canvas = document.getElementById('photoCanvas');
-    if (!canvas || canvas.width === 0 || canvas.height === 0) {
-        return showToast("先に写真をアップロードしてください");
-    }
+    if (!canvas || canvas.width === 0) return showToast("写真を先に選択してください");
 
     const btn = document.getElementById('aiBtn');
     btn.disabled = true;
     showToast("AI建物解析中...");
     
     try {
-        // 現在のキャンバスの状態をBase64化（リサイズせず直接取得）
         const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
-        
-        const prompt = '画像内のメインの建物全体の輪郭を1つの多角形として検出し、座標をJSON形式 {"points":[[x,y],...]} で返してください。xとyは0.0から1.0の数値です。余計な説明は不要です。';
+        const prompt = '画像内のメインの建物全体の輪郭を検出し、JSON形式 {"points":[[x,y],...]} で返してください。x,yは0.0~1.0です。';
 
         const res = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
@@ -273,29 +275,15 @@ async function runAIDetect() {
             body: JSON.stringify({
                 model: 'claude-3-5-sonnet-latest',
                 max_tokens: 1024,
-                messages: [{
-                    role: 'user',
-                    content: [
-                        { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } },
-                        { type: 'text', text: prompt }
-                    ]
-                }]
+                messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: base64 } }, { type: 'text', text: prompt }] }]
             })
         });
         
         const data = await res.json();
-        
-        if (data.error) throw new Error(data.error.message || "APIエラー");
-
-        const text = data.content[0].text;
-        const jsonMatch = text.match(/\{.*\}/s);
-        if (!jsonMatch) throw new Error("AIの応答形式が正しくありません");
-        
-        const json = JSON.parse(jsonMatch[0]);
+        const json = JSON.parse(data.content[0].text.match(/\{.*\}/s)[0]);
         applyBuildingMask(json.points);
-        showToast("検出成功！建物エリアを特定しました");
+        showToast("AI検出完了！");
     } catch (e) {
-        console.error(e);
         showToast("失敗: " + e.message);
     } finally {
         btn.disabled = false;
@@ -308,37 +296,31 @@ function applyBuildingMask(points) {
     const ctx = bcv.getContext('2d');
     const W = cv.width, H = cv.height;
     
-    // マスク用のオフスクリーンキャンバス
     const off = document.createElement('canvas');
     off.width = W; off.height = H;
     const octx = off.getContext('2d');
-    
     octx.beginPath();
     points.forEach((p, i) => {
         const x = p[0] * W, y = p[1] * H;
         if (i === 0) octx.moveTo(x, y); else octx.lineTo(x, y);
     });
     octx.closePath();
-    octx.fillStyle = "white";
     octx.fill();
     
     const imgData = octx.getImageData(0, 0, W, H).data;
     app.buildingMask = new Uint8Array(W * H);
     for (let i = 0; i < W * H; i++) app.buildingMask[i] = imgData[i * 4 + 3] > 127 ? 1 : 0;
     
-    // 視覚的演出（建物以外を暗く）
     ctx.clearRect(0, 0, W, H);
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(0,0,W,H);
     ctx.globalCompositeOperation = 'destination-out';
-    
     ctx.beginPath();
     points.forEach((p, i) => {
         const x = p[0] * W, y = p[1] * H;
         if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     });
     ctx.fill();
-    
     ctx.globalCompositeOperation = 'source-over';
     ctx.strokeStyle = '#8b5cf6'; ctx.lineWidth = 3; ctx.setLineDash([5, 5]); ctx.stroke();
 }
@@ -353,8 +335,7 @@ function handleCanvasClick(e) {
         return showToast("建物の外側です");
     }
     
-    const areaPx = 2500; // 1クリックあたりの面積（ダミー）
-    const areaM2 = areaPx / (app.ppm ** 2);
+    const areaM2 = 2500 / (app.ppm ** 2);
     app.regions.push({ x, y, area: areaM2, type: app.mode });
     drawRegions(); updateResultUI();
 }
@@ -377,14 +358,14 @@ function updateResultUI() {
     document.getElementById('winArea').textContent = win.toFixed(1);
     document.getElementById('netArea').textContent = (wall - win).toFixed(1);
     document.getElementById('resGrid').style.display = app.regions.length ? 'grid' : 'none';
-    document.getElementById('saveBtn').style.display = app.regions.length ? 'block' : 'none';
+    document.getElementById('saveBtn').style.display = 'block';
 }
 
 function saveCurrentPhoto() {
     const wall = parseFloat(document.getElementById('wallArea').textContent);
     const win = parseFloat(document.getElementById('winArea').textContent);
     app.photos.push({ id: app.currentPhotoNum, wallArea: wall, winArea: win, netArea: wall - win });
-    showToast(`${app.currentPhotoNum}枚目の積算を保存しました`);
+    showToast(`${app.currentPhotoNum}枚目を保存しました`);
     document.getElementById('toListBtn').style.display = 'block';
 }
 
@@ -403,8 +384,8 @@ function renderList() {
     const list = document.getElementById('photoList');
     list.innerHTML = app.photos.map(p => `
         <div style="background: var(--bg3); padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; border: 1px solid var(--border);">
-            <span>${p.id}枚目の写真</span>
-            <span>外壁:${p.wallArea.toFixed(1)} / 除外:${p.winArea.toFixed(1)} / <b>正味:${p.netArea.toFixed(1)}m²</b></span>
+            <span>${p.id}枚目</span>
+            <span>正味:${p.netArea.toFixed(1)}m²</span>
         </div>
     `).join('');
 }
@@ -413,29 +394,25 @@ function renderConfirm() {
     const div = document.getElementById('confirmData');
     const total = app.photos.reduce((s, p) => s + p.netArea, 0);
     div.innerHTML = `
-        <p>案件番号: ${app.session.projectNum}</p>
-        <p>依頼主: ${app.session.clientName}</p>
-        <p>現場住所: ${app.session.address || '-'}</p>
-        <p>写真枚数: ${app.photos.length} 枚</p>
-        <hr style="margin: 10px 0; border-color: var(--border);">
-        <p style="font-size: 20px; font-weight: 800; color: var(--orange);">合計塗装面積: ${total.toFixed(1)} m²</p>
+        <p>案件: ${app.session.projectNum}</p>
+        <p>合計塗装面積: <b style="color: var(--orange); font-size: 20px;">${total.toFixed(1)} m²</b></p>
     `;
 }
 
 async function sendToGAS() {
     const gasUrl = document.getElementById('gasId').value.trim();
-    if (!gasUrl) return showToast("GASのWebApp URLを設定してください");
+    if (!gasUrl) return showToast("GASのURLを設定してください");
     const btn = document.getElementById('gasSubmitBtn');
     btn.disabled = true; showToast("送信中...");
     
-    const payload = { ...app.session, totalArea: app.photos.reduce((s,p)=>s+p.netArea,0), photoCount: app.photos.length, timestamp: new Date().toISOString() };
+    const payload = { ...app.session, totalArea: app.photos.reduce((s,p)=>s+p.netArea,0), photoCount: app.photos.length };
     
     try {
         await fetch(gasUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-        showToast("スプレッドシートへの登録が完了しました！");
-        setTimeout(() => location.reload(), 2500);
+        showToast("完了しました！");
+        setTimeout(() => location.reload(), 2000);
     } catch (e) {
-        showToast("送信失敗: " + e.message);
+        showToast("失敗: " + e.message);
         btn.disabled = false;
     }
 }
@@ -451,7 +428,7 @@ function openSettings() { document.getElementById('settingsModal').classList.add
 function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
 function showToast(m) {
     const t = document.createElement('div'); t.className = 'toast'; t.textContent = m;
-    document.body.appendChild(t); setTimeout(() => t.remove(), 3500);
+    document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
 }
 </script>
 </body>
