@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>外壁塗装積算システム - Gemini Detect v3.4</title>
+    <title>外壁塗装積算システム - Gemini Detect v3.5</title>
     <style>
         :root {
             --bg: #0a0c10; --bg2: #111318; --bg3: #1a1d24; --border: #252830; 
@@ -59,7 +59,7 @@
 <body>
 
 <div class="header">
-    <h1>外壁塗装積算システム <span style="font-size: 10px; color: var(--muted);">Gemini Detect v3.4</span></h1>
+    <h1>外壁塗装積算システム <span style="font-size: 10px; color: var(--muted);">Gemini Detect v3.5</span></h1>
     <button class="btn btn-secondary" onclick="openSettings()" style="padding: 8px 12px;">⚙️ 設定</button>
 </div>
 
@@ -130,7 +130,7 @@
             <div id="confirmData" style="background: var(--bg3); padding: 15px; border-radius: 8px; margin: 20px 0; font-size: 14px;"></div>
             <div style="display: flex; gap: 10px;">
                 <button class="btn btn-secondary" onclick="switchMode('review')">戻る</button>
-                <button class="btn btn-primary" onclick="sendToGAS()" id="gasSubmitBtn">GASへ送信</button>
+                <button class="btn btn-primary" onclick="sendToGAS()" id="gasSubmitBtn">GASへ送信して完了</button>
             </div>
         </div>
     </div>
@@ -155,7 +155,7 @@ let app = {
     buildingMask: null, regions: [], ppm: 100
 };
 
-// 起動時の初期化
+// 起動時に設定を読み込む
 window.onload = () => {
     const saved = localStorage.getItem('roofapp_settings');
     if (saved) {
@@ -238,10 +238,10 @@ function initCanvas(img) {
     updateResultUI();
 }
 
-// --- Gemini AI Detect (v1 エンドポイント + 標準モデル名に修正) ---
+// --- Gemini AI Detect (v1beta + 標準モデル名に再固定) ---
 async function runAIDetect() {
     const key = document.getElementById('apiKey').value.trim();
-    if (!key) return showToast("Gemini APIキーを設定してください");
+    if (!key) return showToast("設定からGeminiのキーを入力してください");
     
     const btn = document.getElementById('aiBtn');
     btn.disabled = true;
@@ -250,10 +250,10 @@ async function runAIDetect() {
     const canvas = document.getElementById('photoCanvas');
     const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
     
-    // 最も安定している v1 エンドポイントを使用し、モデル名を標準の gemini-1.5-flash に固定
-    const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
+    // v1beta エンドポイント ＋ ハイフンなしのモデル名
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
     
-    const prompt = 'Detect the boundary of the main building in this image. Return the result as a JSON object with a "points" array containing [y, x] coordinate pairs (normalized 0-1000). Use around 15-20 points. Return ONLY the JSON object. Example format: {"points": [[100, 200], [150, 250], ...]}';
+    const prompt = 'Detect the boundary of the main building in this image. Return the result as a JSON object with a "points" array containing [y, x] coordinate pairs (normalized 0-1000). Use around 15-20 points. Return ONLY the JSON object. Example: {"points": [[100, 200], [150, 250]]}';
 
     try {
         const res = await fetch(url, {
@@ -266,26 +266,26 @@ async function runAIDetect() {
         
         const data = await res.json();
         
-        // エラーハンドリングの強化
         if (data.error) {
-            throw new Error(data.error.message || "API通信エラー");
+            // エラーをより詳しく報告
+            throw new Error(`APIエラー: ${data.error.status} - ${data.error.message}`);
         }
 
         if (!data.candidates || data.candidates.length === 0) {
-            throw new Error("AIから有効な応答が得られませんでした");
+            throw new Error("AIから応答が得られませんでした。");
         }
 
         const text = data.candidates[0].content.parts[0].text;
         const jsonMatch = text.match(/\{.*\}/s);
-        if (!jsonMatch) throw new Error("AIがJSON形式のデータを返しませんでした");
+        if (!jsonMatch) throw new Error("応答データがJSON形式ではありません。");
         
         const json = JSON.parse(jsonMatch[0]);
-        // [y, x] (0-1000) -> [x, y] (0.0-1.0)
+        // 座標変換 [y, x] (0-1000) -> [x, y] (0.0-1.0)
         const points = json.points.map(p => [p[1]/1000, p[0]/1000]); 
         applyBuildingMask(points);
         showToast("検出成功！建物エリアをロックしました");
     } catch (e) {
-        console.error("AI解析エラー詳細:", e);
+        console.error("Gemini Error Detail:", e);
         showToast("失敗: " + e.message);
     } finally { btn.disabled = false; }
 }
@@ -322,6 +322,7 @@ function applyBuildingMask(points) {
     ctx.strokeStyle = '#8b5cf6'; ctx.lineWidth = 3; ctx.setLineDash([5, 5]); ctx.stroke();
 }
 
+// クリック判定と計算
 function handleCanvasClick(e) {
     const scv = document.getElementById('selectCanvas');
     const rect = scv.getBoundingClientRect();
@@ -405,8 +406,8 @@ async function sendToGAS() {
     const payload = { ...app.session, totalArea: app.photos.reduce((s,p)=>s+p.netArea,0), photoCount: app.photos.length };
     try {
         await fetch(gasUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-        showToast("送信完了しました！");
-        setTimeout(() => location.reload(), 2500);
+        showToast("スプレッドシートへの登録が完了しました！");
+        setTimeout(() => location.reload(), 2000);
     } catch (e) {
         showToast("失敗: " + e.message); btn.disabled = false;
     }
