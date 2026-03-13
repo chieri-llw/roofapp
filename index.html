@@ -155,6 +155,7 @@ let app = {
     buildingMask: null, regions: [], ppm: 100
 };
 
+// --- 初期化 ---
 window.onload = () => {
     const saved = localStorage.getItem('roofapp_settings');
     if (saved) {
@@ -196,6 +197,7 @@ function switchMode(m) {
     if (m === 'confirm') renderConfirm();
 }
 
+// --- 画像処理 ---
 function handleFile(input) {
     const file = input.files[0];
     if (!file) return;
@@ -236,7 +238,7 @@ function initCanvas(img) {
     updateResultUI();
 }
 
-// --- Gemini AI Detect (v1 Endpoint Fixed) ---
+// --- Gemini AI解析 (修正版エンドポイント) ---
 async function runAIDetect() {
     const key = document.getElementById('apiKey').value.trim();
     if (!key) return showToast("Gemini APIキーを設定してください");
@@ -248,10 +250,10 @@ async function runAIDetect() {
     const canvas = document.getElementById('photoCanvas');
     const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
     
-    // v1 APIを使い、より詳細な座標を要求
+    // v1 安定版エンドポイントを使用
     const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
     
-    const prompt = 'Detect the boundary of the main building in this image. Return the result as a JSON object with a "points" array of [y, x] coordinates (0-1000 normalized). Example: {"points": [[100, 200], ...]}. Return only the JSON.';
+    const prompt = 'Detect the boundary of the main building in this image. Return the result as a JSON object with a "points" array containing [y, x] coordinate pairs (normalized 0-1000). Use around 15-20 points. Return ONLY the JSON object.';
 
     try {
         const res = await fetch(url, {
@@ -269,12 +271,13 @@ async function runAIDetect() {
         const jsonStr = text.match(/\{.*\}/s)[0];
         const json = JSON.parse(jsonStr);
         
+        // 座標変換 [y, x] (0-1000) -> [x, y] (0.0-1.0)
         const points = json.points.map(p => [p[1]/1000, p[0]/1000]); 
         applyBuildingMask(points);
-        showToast("検出成功！建物エリアを特定しました");
+        showToast("検出成功！建物エリアをロックしました");
     } catch (e) {
         console.error(e);
-        showToast("AI解析失敗。URLまたはキーを確認してください");
+        showToast("AI解析失敗。キーの有効性や画像を確認してください");
     } finally { btn.disabled = false; }
 }
 
@@ -313,6 +316,7 @@ function applyBuildingMask(points) {
     ctx.strokeStyle = '#8b5cf6'; ctx.lineWidth = 3; ctx.setLineDash([5, 5]); ctx.stroke();
 }
 
+// --- クリック処理と積算 ---
 function handleCanvasClick(e) {
     const scv = document.getElementById('selectCanvas');
     const rect = scv.getBoundingClientRect();
@@ -372,8 +376,8 @@ function renderList() {
     const list = document.getElementById('photoList');
     list.innerHTML = app.photos.map(p => `
         <div style="background: var(--bg3); padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; border: 1px solid var(--border);">
-            <span>${p.id}枚目</span>
-            <span>正味:${p.netArea.toFixed(1)}m²</span>
+            <span>${p.id}枚目の写真</span>
+            <span>正味面積: <b>${p.netArea.toFixed(1)}m²</b></span>
         </div>
     `).join('');
 }
@@ -382,11 +386,13 @@ function renderConfirm() {
     const div = document.getElementById('confirmData');
     const total = app.photos.reduce((s, p) => s + p.netArea, 0);
     div.innerHTML = `
-        <p>案件: ${app.session.projectNum}</p>
+        <p>案件番号: ${app.session.projectNum}</p>
+        <p>依頼主: ${app.session.clientName}</p>
         <p>合計塗装面積: <b style="color: var(--orange); font-size: 20px;">${total.toFixed(1)} m²</b></p>
     `;
 }
 
+// --- 外部連携 (GAS) ---
 async function sendToGAS() {
     const gasUrl = document.getElementById('gasId').value.trim();
     if (!gasUrl) return showToast("GASのWebApp URLを設定してください");
@@ -395,7 +401,8 @@ async function sendToGAS() {
     const payload = { ...app.session, totalArea: app.photos.reduce((s,p)=>s+p.netArea,0), photoCount: app.photos.length };
     try {
         await fetch(gasUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-        showToast("完了しました！"); setTimeout(() => location.reload(), 2000);
+        showToast("スプレッドシートへの登録が完了しました！");
+        setTimeout(() => location.reload(), 2500);
     } catch (e) {
         showToast("失敗: " + e.message); btn.disabled = false;
     }
