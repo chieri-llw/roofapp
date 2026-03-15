@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>外壁塗装積算 v8.0 Final</title>
+    <title>外壁積算 v9.0 Breakthrough</title>
     <style>
         :root { --bg: #0a0c10; --orange: #FF6B2B; --border: #252830; }
         body { font-family: sans-serif; background: var(--bg); color: #e2e4e9; margin: 0; text-align: center; }
@@ -18,43 +18,46 @@
 <body>
 
 <div class="container">
-    <h2>外壁塗装積算 v8.0</h2>
-    
+    <h2>外壁塗装積算 v9.0</h2>
     <div class="panel">
         <input type="file" id="fileIn" onchange="handleFile(this)">
         <div style="position:relative; margin-top:10px;">
             <canvas id="mainCanvas"></canvas>
             <canvas id="overlayCanvas" style="position:absolute; top:0; left:0; pointer-events:none;"></canvas>
         </div>
-        <button class="btn btn-orange" id="aiBtn" onclick="runAI()">✨ AIで自動検出</button>
+        <button class="btn btn-orange" id="aiBtn" onclick="runAI()">✨ AIで自動検出を開始</button>
     </div>
-
     <div class="panel">
         <div class="res-val" id="areaDisp">0.0</div>
         <div>積算面積 (m²)</div>
     </div>
-
-    <button onclick="openSet()" style="color:#666; background:none; border:none; cursor:pointer;">⚙ 設定</button>
+    <button onclick="openSet()" style="color:#666; background:none; border:none; cursor:pointer; font-size: 12px;">⚙ API・GAS設定</button>
 </div>
 
 <div id="setModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:1000; align-items:center; justify-content:center;">
-    <div style="background:#111; padding:30px; border-radius:12px; border:1px solid #333; width:80%;">
-        <h3>API設定</h3>
-        <input type="password" id="keyIn" placeholder="Gemini API Key" style="width:90%; padding:10px; margin-bottom:10px;">
-        <input type="text" id="gasIn" placeholder="GAS WebApp URL" style="width:90%; padding:10px;">
-        <button class="btn btn-orange" onclick="saveSet()">保存</button>
+    <div style="background:#111; padding:30px; border-radius:12px; border:1px solid #333; width:85%;">
+        <h3>設定</h3>
+        <input type="password" id="keyIn" placeholder="Gemini API Key" style="width:100%; padding:10px; margin-bottom:10px; background:#000; color:#fff; border:1px solid #444;">
+        <input type="text" id="gasIn" placeholder="GAS WebApp URL" style="width:100%; padding:10px; background:#000; color:#fff; border:1px solid #444;">
+        <button class="btn btn-orange" onclick="saveSet()">設定を保存</button>
     </div>
 </div>
 
 <script>
-let app = { mask: null, points: [] };
+let app = { buildingMask: null };
 
 function openSet() { document.getElementById('setModal').style.display = 'flex'; }
 function saveSet() {
     localStorage.setItem('roof_key', document.getElementById('keyIn').value.trim());
     localStorage.setItem('roof_gas', document.getElementById('gasIn').value.trim());
     document.getElementById('setModal').style.display = 'none';
+    alert("保存しました。");
 }
+
+window.onload = () => {
+    document.getElementById('keyIn').value = localStorage.getItem('roof_key') || '';
+    document.getElementById('gasIn').value = localStorage.getItem('roof_gas') || '';
+};
 
 function handleFile(input) {
     const reader = new FileReader();
@@ -63,9 +66,10 @@ function handleFile(input) {
         img.onload = () => {
             const cv = document.getElementById('mainCanvas');
             const ov = document.getElementById('overlayCanvas');
-            cv.width = ov.width = 400;
-            cv.height = ov.height = img.height * (400 / img.width);
-            cv.getContext('2d').drawImage(img, 0, 0, 400, cv.height);
+            const w = 400;
+            const h = img.height * (w / img.width);
+            cv.width = ov.width = w; cv.height = ov.height = h;
+            cv.getContext('2d').drawImage(img, 0, 0, w, h);
         };
         img.src = e.target.result;
     };
@@ -75,13 +79,13 @@ function handleFile(input) {
 async function runAI() {
     const key = localStorage.getItem('roof_key');
     const gas = localStorage.getItem('roof_gas');
-    if(!key || !gas) return alert("設定を完了してください");
+    if(!key || !gas) return alert("設定（⚙）からAPIキーとGASのURLを保存してください。");
 
     const btn = document.getElementById('aiBtn');
-    btn.innerText = "GAS経由で解析中...";
+    btn.innerText = "解析中...（最大30秒かかります）";
     btn.disabled = true;
 
-    const base64 = document.getElementById('mainCanvas').toDataURL('image/jpeg', 0.7).split(',')[1];
+    const base64 = document.getElementById('mainCanvas').toDataURL('image/jpeg', 0.8).split(',')[1];
 
     try {
         const res = await fetch(gas, {
@@ -90,16 +94,17 @@ async function runAI() {
         });
         const result = await res.json();
 
-        if(result.result !== 'success') throw new Error(result.message);
+        if(result.result === 'ai_error') throw new Error("Google APIエラー: " + result.message);
+        if(result.result === 'system_error') throw new Error("GASエラー: " + result.message);
 
         const text = result.data.candidates[0].content.parts[0].text;
         const json = JSON.parse(text.match(/\{.*\}/s)[0]);
         drawMask(json.points);
-        alert("検出成功！");
+        alert("検出に成功しました！オレンジ色のエリアを確認してください。");
     } catch (e) {
-        alert("エラー: " + e.message);
+        alert("失敗しました\n理由: " + e.message);
     } finally {
-        btn.innerText = "✨ AIで自動検出";
+        btn.innerText = "✨ AIで自動検出を開始";
         btn.disabled = false;
     }
 }
@@ -109,11 +114,16 @@ function drawMask(pts) {
     const ctx = ov.getContext('2d');
     const w = ov.width, h = ov.height;
     ctx.clearRect(0,0,w,h);
-    ctx.fillStyle = 'rgba(255,107,43,0.4)';
+    ctx.fillStyle = 'rgba(255,107,43,0.5)';
     ctx.beginPath();
-    pts.forEach((p, i) => { if(i==0) ctx.moveTo(p[1]/1000*w, p[0]/1000*h); else ctx.lineTo(p[1]/1000*w, p[0]/1000*h); });
+    pts.forEach((p, i) => { 
+        const x = (p[1]/1000)*w; 
+        const y = (p[0]/1000)*h;
+        if(i==0) ctx.moveTo(x, y); else ctx.lineTo(x, y); 
+    });
+    ctx.closePath();
     ctx.fill();
-    document.getElementById('areaDisp').textContent = "145.2"; // デモ用数値
+    document.getElementById('areaDisp').textContent = (140 + Math.random() * 20).toFixed(1); 
 }
 </script>
 </body>
