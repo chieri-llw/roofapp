@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>外壁塗装積算システム - Gemini v3.7 Final</title>
+    <title>外壁塗装積算システム - Gemini v4.0</title>
     <style>
         :root {
             --bg: #0a0c10; --bg2: #111318; --bg3: #1a1d24; --border: #252830; 
@@ -11,45 +11,42 @@
             --text: #e2e4e9; --muted: #6b7280;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
         .header { background: var(--bg2); padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
         .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         .panel { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 25px; display: none; }
         .panel.active { display: block; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 5px; }
-        input, select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg3); color: #fff; }
-        .canvas-container { position: relative; margin: 20px 0; background: #000; border-radius: 8px; display: flex; justify-content: center; }
+        input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg3); color: #fff; margin-top: 5px; }
+        .canvas-container { position: relative; margin: 20px 0; background: #000; border-radius: 8px; display: flex; justify-content: center; min-height: 300px; }
         canvas { max-width: 100%; height: auto; display: block; }
         #buildingCanvas, #selectCanvas { position: absolute; top: 0; left: 50%; transform: translateX(-50%); pointer-events: none; }
         #selectCanvas { pointer-events: auto; cursor: crosshair; }
-        .btn { padding: 12px 24px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; }
+        .btn { padding: 12px 24px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; width: 100%; margin-bottom: 10px; }
         .btn-primary { background: var(--blue); color: #fff; }
         .btn-orange { background: var(--orange); color: #fff; }
-        .res-val { font-size: 20px; font-weight: 800; color: var(--orange); }
         .type-toggle { display: flex; gap: 10px; margin: 15px 0; }
-        .type-btn { flex: 1; padding: 10px; border-radius: 8px; border: 2px solid var(--border); background: var(--bg3); color: var(--muted); font-weight: 700; }
+        .type-btn { flex: 1; padding: 10px; border-radius: 8px; border: 2px solid var(--border); background: var(--bg3); color: var(--muted); font-weight: 700; cursor: pointer; }
         .type-btn.active.wall { border-color: var(--orange); color: var(--orange); }
         .type-btn.active.win { border-color: var(--green); color: var(--green); }
-        .toast { position: fixed; bottom: 20px; right: 20px; background: var(--purple); color: #fff; padding: 12px 24px; border-radius: 8px; z-index: 2000; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .toast { position: fixed; bottom: 20px; right: 20px; background: var(--purple); color: #fff; padding: 12px 24px; border-radius: 8px; z-index: 2000; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>外壁塗装積算システム <span style="font-size: 10px; color: var(--muted);">v3.7 Final</span></h1>
-    <button class="btn" onclick="openSettings()" style="background:var(--border); color: #fff;">⚙️ 設定</button>
+    <h1>外壁塗装積算 <span style="font-size: 10px; color: var(--muted);">v4.0 SDK Fix</span></h1>
+    <button onclick="openSettings()" style="background:var(--border); color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;">⚙️ 設定</button>
 </div>
 
 <div class="container">
     <div class="panel active" id="setupSection">
         <h2>案件情報入力</h2>
-        <div class="form-group"><label>依頼主名 *</label><input type="text" id="clientName"></div>
-        <button class="btn btn-primary" onclick="startProject()" style="width: 100%;">積算を開始する</button>
+        <input type="text" id="clientName" placeholder="お客様名">
+        <button class="btn btn-primary" onclick="startProject()" style="margin-top: 15px;">積算を開始する</button>
     </div>
 
     <div class="panel" id="measuringSection">
-        <div id="uploadZone" onclick="document.getElementById('photoInput').click()" style="border: 2px dashed var(--border); padding: 40px; text-align: center; cursor: pointer; border-radius: 10px; background: var(--bg3);">
+        <div id="uploadZone" onclick="document.getElementById('photoInput').click()" style="border: 2px dashed var(--border); padding: 50px; text-align: center; cursor: pointer; background: var(--bg3);">
             📷 写真を選択
             <input type="file" id="photoInput" hidden onchange="handleFile(this)">
         </div>
@@ -63,13 +60,14 @@
                 <button class="type-btn active wall" id="typeWall" onclick="setMode('wall')">🟠 外壁</button>
                 <button class="type-btn win" id="typeWin" onclick="setMode('window')">🟢 窓・除外</button>
             </div>
-            <button class="btn btn-orange" id="aiBtn" onclick="runAIDetect()" style="width: 100%; margin-bottom: 15px;">✨ Gemini AIで自動検出</button>
-            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                <button class="btn" onclick="undo()" style="flex:1; background:var(--bg3);">↩ 戻す</button>
-                <button class="btn" onclick="resetCanvas()" style="flex:1; background:var(--bg3);">🗑 クリア</button>
+            <button class="btn btn-orange" id="aiBtn" onclick="runAIDetect()">✨ Geminiで自動検出</button>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn" onclick="undo()" style="background:var(--bg3); color:#fff;">↩ 戻す</button>
+                <button class="btn" onclick="resetCanvas()" style="background:var(--bg3); color:#fff;">🗑 クリア</button>
             </div>
             <div style="background: var(--bg3); padding: 15px; border-radius: 8px; text-align: center;">
-                <div class="res-val" id="netArea">0.0</div><div style="font-size: 10px;">積算面積(m²)</div>
+                <div style="font-size: 24px; font-weight: 800; color: var(--orange);" id="netArea">0.0</div>
+                <div style="font-size: 10px;">積算面積(m²)</div>
             </div>
         </div>
     </div>
@@ -78,35 +76,47 @@
 <div id="settingsModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:1000; align-items:center; justify-content:center;">
     <div style="background:var(--bg2); padding:30px; border-radius:12px; width:90%; max-width:400px; border:1px solid var(--border);">
         <h3>システム設定</h3>
-        <div class="form-group"><label>Gemini API Key</label><input type="password" id="apiKey"></div>
-        <button class="btn btn-primary" onclick="saveSettings()" style="width: 100%;">保存</button>
+        <p style="font-size:10px; color:var(--muted); margin-bottom:10px;">※Gemini APIキーを入力してください</p>
+        <input type="password" id="apiKey" placeholder="AI Studio Key">
+        <button class="btn btn-primary" onclick="saveSettings()" style="margin-top:15px;">保存</button>
     </div>
 </div>
 
-<script>
+<script type="importmap">
+  {
+    "imports": {
+      "@google/generative-ai": "https://esm.run/@google/generative-ai"
+    }
+  }
+</script>
+
+<script type="module">
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
 let app = { mode: 'wall', regions: [], ppm: 100, buildingMask: null };
 
+// 設定の読み込み
 window.onload = () => {
     const saved = JSON.parse(localStorage.getItem('roofapp_settings') || '{}');
     if (saved.apiKey) document.getElementById('apiKey').value = saved.apiKey;
 };
 
-function saveSettings() {
+window.saveSettings = () => {
     localStorage.setItem('roofapp_settings', JSON.stringify({ apiKey: document.getElementById('apiKey').value.trim() }));
     document.getElementById('settingsModal').style.display = 'none';
-    showToast("保存しました");
-}
+    showToast("保存完了");
+};
 
-function openSettings() { document.getElementById('settingsModal').style.display = 'flex'; }
-function startProject() {
+window.openSettings = () => { document.getElementById('settingsModal').style.display = 'flex'; };
+
+window.startProject = () => {
     if (!document.getElementById('clientName').value) return showToast("名前を入力してください");
     document.getElementById('setupSection').style.display = 'none';
     document.getElementById('measuringSection').style.display = 'block';
-}
+};
 
-function handleFile(input) {
+window.handleFile = (input) => {
     const file = input.files[0];
-    if (!file) return;
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
@@ -126,59 +136,45 @@ function handleFile(input) {
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
-}
+};
 
-// --- ついに完成したGemini通信ロジック ---
-async function runAIDetect() {
+// 🔥 Gemini SDKを使った新しい自動検出
+window.runAIDetect = async () => {
     const key = document.getElementById('apiKey').value.trim();
-    if (!key) return showToast("APIキーを設定してください");
+    if (!key) return showToast("設定からAPIキーを入力してください");
     
     const btn = document.getElementById('aiBtn');
     btn.disabled = true;
-    showToast("AI解析中...");
-    
-    const canvas = document.getElementById('photoCanvas');
-    const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
-    
-    // URLから :generateContent を削除（これが404の真犯人！）
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash?key=${key}`;
-    
-    const payload = {
-        contents: [{
-            parts: [
-                { text: "Detect the building boundary and return ONLY JSON like this: {\"points\": [[y, x], [y, x], ...]} using 0-1000 normalized coordinates. Provide 20 points." },
-                { inline_data: { mime_type: "image/jpeg", data: base64 } }
-            ]
-        }]
-    };
+    showToast("Gemini AIが解析中...");
 
     try {
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        
-        const data = await res.json();
-        
-        if (!data.candidates || !data.candidates[0].content) {
-            throw new Error(data.error ? data.error.message : "AI応答エラー");
-        }
+        const genAI = new GoogleGenerativeAI(key);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-        const text = data.candidates[0].content.parts[0].text;
-        const jsonMatch = text.match(/\{.*\}/s);
-        if (!jsonMatch) throw new Error("JSON形式の取得に失敗しました");
-        
-        const json = JSON.parse(jsonMatch[0]);
+        const canvas = document.getElementById('photoCanvas');
+        const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+
+        const prompt = "Detect the outer boundary of the main building and return ONLY a JSON object: {\"points\": [[y, x], ...]} using 0-1000 normalized coordinates. Provide 20 points.";
+
+        const result = await model.generateContent([
+            prompt,
+            { inlineData: { data: base64, mimeType: "image/jpeg" } }
+        ]);
+
+        const response = await result.response;
+        const text = response.text();
+        const json = JSON.parse(text.match(/\{.*\}/s)[0]);
         const pts = json.points.map(p => [p[1]/1000, p[0]/1000]);
-        
+
         applyMask(pts);
         showToast("検出成功！");
     } catch (e) {
         console.error(e);
-        showToast("エラー: " + e.message);
-    } finally { btn.disabled = false; }
-}
+        showToast("エラー: ブラウザの制限を回避できませんでした。設定を確認してください。");
+    } finally {
+        btn.disabled = false;
+    }
+};
 
 function applyMask(pts) {
     const cv = document.getElementById('photoCanvas');
@@ -226,17 +222,17 @@ function draw() {
     document.getElementById('netArea').textContent = Math.max(0, total).toFixed(1);
 }
 
-function setMode(m) {
+window.setMode = (m) => {
     app.mode = m;
     document.getElementById('typeWall').classList.toggle('active', m === 'wall');
     document.getElementById('typeWin').classList.toggle('active', m === 'window');
-}
-function undo() { app.regions.pop(); draw(); }
-function resetCanvas() { app.regions = []; app.buildingMask = null; draw(); document.getElementById('buildingCanvas').getContext('2d').clearRect(0,0,800,800); }
-function showToast(m) {
+};
+window.undo = () => { app.regions.pop(); draw(); };
+window.resetCanvas = () => { app.regions = []; app.buildingMask = null; draw(); document.getElementById('buildingCanvas').getContext('2d').clearRect(0,0,800,800); };
+window.showToast = (m) => {
     const t = document.createElement('div'); t.className = 'toast'; t.textContent = m;
     document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
-}
+};
 </script>
 </body>
 </html>
