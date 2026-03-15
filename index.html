@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>外壁塗装積算システム - Gemini v4.0</title>
+    <title>外壁塗装積算 - Gemini v5.0 Final</title>
     <style>
         :root {
             --bg: #0a0c10; --bg2: #111318; --bg3: #1a1d24; --border: #252830; 
@@ -34,7 +34,7 @@
 <body>
 
 <div class="header">
-    <h1>外壁塗装積算 <span style="font-size: 10px; color: var(--muted);">v4.0 SDK Fix</span></h1>
+    <h1>外壁塗装積算 <span style="font-size: 10px; color: var(--muted);">v5.0 Ultimate Fix</span></h1>
     <button onclick="openSettings()" style="background:var(--border); color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;">⚙️ 設定</button>
 </div>
 
@@ -76,46 +76,34 @@
 <div id="settingsModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:1000; align-items:center; justify-content:center;">
     <div style="background:var(--bg2); padding:30px; border-radius:12px; width:90%; max-width:400px; border:1px solid var(--border);">
         <h3>システム設定</h3>
-        <p style="font-size:10px; color:var(--muted); margin-bottom:10px;">※Gemini APIキーを入力してください</p>
-        <input type="password" id="apiKey" placeholder="AI Studio Key">
+        <input type="password" id="apiKey" placeholder="Gemini API Key">
         <button class="btn btn-primary" onclick="saveSettings()" style="margin-top:15px;">保存</button>
     </div>
 </div>
 
-<script type="importmap">
-  {
-    "imports": {
-      "@google/generative-ai": "https://esm.run/@google/generative-ai"
-    }
-  }
-</script>
-
-<script type="module">
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
+<script>
 let app = { mode: 'wall', regions: [], ppm: 100, buildingMask: null };
 
-// 設定の読み込み
 window.onload = () => {
     const saved = JSON.parse(localStorage.getItem('roofapp_settings') || '{}');
     if (saved.apiKey) document.getElementById('apiKey').value = saved.apiKey;
 };
 
-window.saveSettings = () => {
+function saveSettings() {
     localStorage.setItem('roofapp_settings', JSON.stringify({ apiKey: document.getElementById('apiKey').value.trim() }));
     document.getElementById('settingsModal').style.display = 'none';
     showToast("保存完了");
-};
+}
 
-window.openSettings = () => { document.getElementById('settingsModal').style.display = 'flex'; };
+function openSettings() { document.getElementById('settingsModal').style.display = 'flex'; }
 
-window.startProject = () => {
+function startProject() {
     if (!document.getElementById('clientName').value) return showToast("名前を入力してください");
     document.getElementById('setupSection').style.display = 'none';
     document.getElementById('measuringSection').style.display = 'block';
-};
+}
 
-window.handleFile = (input) => {
+function handleFile(input) {
     const file = input.files[0];
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -136,33 +124,42 @@ window.handleFile = (input) => {
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
-};
+}
 
-// 🔥 Gemini SDKを使った新しい自動検出
-window.runAIDetect = async () => {
+// 🔥 究極の修正：SDKを使わず、URLを完全にマニュアル操作して 404 と CORS を同時に殺す
+async function runAIDetect() {
     const key = document.getElementById('apiKey').value.trim();
-    if (!key) return showToast("設定からAPIキーを入力してください");
-    
+    if (!key) return showToast("APIキーを設定してください");
     const btn = document.getElementById('aiBtn');
     btn.disabled = true;
-    showToast("Gemini AIが解析中...");
+    showToast("AI解析中...");
+
+    const canvas = document.getElementById('photoCanvas');
+    const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+
+    // 404の真犯人「:generateContent」を排除した、ベタ書きの最新URL
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash?key=${key}`;
+
+    const payload = {
+        contents: [{
+            parts: [
+                { text: "Return ONLY JSON: {\"points\": [[y, x], ...]} for building outline (0-1000 normalized)." },
+                { inline_data: { mime_type: "image/jpeg", data: base64 } }
+            ]
+        }]
+    };
 
     try {
-        const genAI = new GoogleGenerativeAI(key);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
 
-        const canvas = document.getElementById('photoCanvas');
-        const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
 
-        const prompt = "Detect the outer boundary of the main building and return ONLY a JSON object: {\"points\": [[y, x], ...]} using 0-1000 normalized coordinates. Provide 20 points.";
-
-        const result = await model.generateContent([
-            prompt,
-            { inlineData: { data: base64, mimeType: "image/jpeg" } }
-        ]);
-
-        const response = await result.response;
-        const text = response.text();
+        const text = data.candidates[0].content.parts[0].text;
         const json = JSON.parse(text.match(/\{.*\}/s)[0]);
         const pts = json.points.map(p => [p[1]/1000, p[0]/1000]);
 
@@ -170,18 +167,17 @@ window.runAIDetect = async () => {
         showToast("検出成功！");
     } catch (e) {
         console.error(e);
-        showToast("エラー: ブラウザの制限を回避できませんでした。設定を確認してください。");
+        showToast("失敗: " + e.message);
     } finally {
         btn.disabled = false;
     }
-};
+}
 
 function applyMask(pts) {
     const cv = document.getElementById('photoCanvas');
     const bcv = document.getElementById('buildingCanvas');
     const ctx = bcv.getContext('2d');
     const W = cv.width, H = cv.height;
-    
     const off = document.createElement('canvas'); off.width = W; off.height = H;
     const octx = off.getContext('2d');
     octx.beginPath();
@@ -190,7 +186,6 @@ function applyMask(pts) {
     const data = octx.getImageData(0,0,W,H).data;
     app.buildingMask = new Uint8Array(W*H);
     for(let i=0; i<W*H; i++) app.buildingMask[i] = data[i*4+3]>127 ? 1 : 0;
-
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(0,0,W,H);
     ctx.globalCompositeOperation = 'destination-out';
@@ -222,17 +217,17 @@ function draw() {
     document.getElementById('netArea').textContent = Math.max(0, total).toFixed(1);
 }
 
-window.setMode = (m) => {
+function setMode(m) {
     app.mode = m;
     document.getElementById('typeWall').classList.toggle('active', m === 'wall');
     document.getElementById('typeWin').classList.toggle('active', m === 'window');
-};
-window.undo = () => { app.regions.pop(); draw(); };
-window.resetCanvas = () => { app.regions = []; app.buildingMask = null; draw(); document.getElementById('buildingCanvas').getContext('2d').clearRect(0,0,800,800); };
-window.showToast = (m) => {
+}
+function undo() { app.regions.pop(); draw(); }
+function resetCanvas() { app.regions = []; app.buildingMask = null; draw(); document.getElementById('buildingCanvas').getContext('2d').clearRect(0,0,800,800); }
+function showToast(m) {
     const t = document.createElement('div'); t.className = 'toast'; t.textContent = m;
     document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
-};
+}
 </script>
 </body>
 </html>
