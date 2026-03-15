@@ -2,103 +2,94 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>外壁塗装積算 - Gemini v5.0 Final</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>外壁塗装積算 - GAS Bridge v6.0</title>
     <style>
-        :root {
-            --bg: #0a0c10; --bg2: #111318; --bg3: #1a1d24; --border: #252830; 
-            --orange: #FF6B2B; --green: #10b981; --blue: #3b82f6; --purple: #8b5cf6; 
-            --text: #e2e4e9; --muted: #6b7280;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
-        .header { background: var(--bg2); padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .panel { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 25px; display: none; }
-        .panel.active { display: block; }
-        input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg3); color: #fff; margin-top: 5px; }
-        .canvas-container { position: relative; margin: 20px 0; background: #000; border-radius: 8px; display: flex; justify-content: center; min-height: 300px; }
-        canvas { max-width: 100%; height: auto; display: block; }
+        :root { --bg: #0a0c10; --bg2: #111318; --orange: #FF6B2B; --border: #252830; --text: #e2e4e9; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; }
+        .header { background: var(--bg2); padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .panel { background: var(--bg2); padding: 20px; border-radius: 12px; border: 1px solid var(--border); display: none; }
+        .active { display: block; }
+        .canvas-container { position: relative; background: #000; margin: 20px 0; display: flex; justify-content: center; }
+        canvas { max-width: 100%; height: auto; }
         #buildingCanvas, #selectCanvas { position: absolute; top: 0; left: 50%; transform: translateX(-50%); pointer-events: none; }
         #selectCanvas { pointer-events: auto; cursor: crosshair; }
-        .btn { padding: 12px 24px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; width: 100%; margin-bottom: 10px; }
-        .btn-primary { background: var(--blue); color: #fff; }
+        .btn { width: 100%; padding: 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+        .btn-primary { background: #3b82f6; color: #fff; }
         .btn-orange { background: var(--orange); color: #fff; }
-        .type-toggle { display: flex; gap: 10px; margin: 15px 0; }
-        .type-btn { flex: 1; padding: 10px; border-radius: 8px; border: 2px solid var(--border); background: var(--bg3); color: var(--muted); font-weight: 700; cursor: pointer; }
-        .type-btn.active.wall { border-color: var(--orange); color: var(--orange); }
-        .type-btn.active.win { border-color: var(--green); color: var(--green); }
-        .toast { position: fixed; bottom: 20px; right: 20px; background: var(--purple); color: #fff; padding: 12px 24px; border-radius: 8px; z-index: 2000; }
+        .type-toggle { display: flex; gap: 10px; margin: 10px 0; }
+        .type-btn { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: #1a1d24; color: #fff; cursor: pointer; }
+        .active-wall { border-color: var(--orange); color: var(--orange); }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>外壁塗装積算 <span style="font-size: 10px; color: var(--muted);">v5.0 Ultimate Fix</span></h1>
-    <button onclick="openSettings()" style="background:var(--border); color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer;">⚙️ 設定</button>
+    <h1>外壁塗装積算 <span style="font-size:10px;">GAS通信版 v6.0</span></h1>
+    <button onclick="openSettings()" style="background:none; border:1px solid #444; color:#fff; cursor:pointer; padding:5px 10px; border-radius:4px;">⚙ 設定</button>
 </div>
 
 <div class="container">
     <div class="panel active" id="setupSection">
-        <h2>案件情報入力</h2>
-        <input type="text" id="clientName" placeholder="お客様名">
-        <button class="btn btn-primary" onclick="startProject()" style="margin-top: 15px;">積算を開始する</button>
+        <h2>案件情報</h2>
+        <input type="text" id="clientName" placeholder="お客様名" style="width:100%; padding:10px; margin-bottom:15px; border-radius:5px; border:1px solid #333; background:#111; color:#fff;">
+        <button class="btn btn-primary" onclick="startProject()">積算開始</button>
     </div>
 
     <div class="panel" id="measuringSection">
-        <div id="uploadZone" onclick="document.getElementById('photoInput').click()" style="border: 2px dashed var(--border); padding: 50px; text-align: center; cursor: pointer; background: var(--bg3);">
-            📷 写真を選択
-            <input type="file" id="photoInput" hidden onchange="handleFile(this)">
-        </div>
-        <div class="canvas-container" id="canvasWrap" style="display: none;">
+        <div id="uploadZone" onclick="document.getElementById('photoInput').click()" style="border:2px dashed #444; padding:40px; text-align:center; cursor:pointer;">📷 写真を選択</div>
+        <input type="file" id="photoInput" hidden onchange="handleFile(this)">
+        
+        <div class="canvas-container" id="canvasWrap" style="display:none;">
             <canvas id="photoCanvas"></canvas>
             <canvas id="buildingCanvas"></canvas>
             <canvas id="selectCanvas"></canvas>
         </div>
-        <div id="toolBar" style="display: none;">
+
+        <div id="toolBar" style="display:none;">
             <div class="type-toggle">
-                <button class="type-btn active wall" id="typeWall" onclick="setMode('wall')">🟠 外壁</button>
-                <button class="type-btn win" id="typeWin" onclick="setMode('window')">🟢 窓・除外</button>
+                <button class="type-btn active-wall" id="typeWall" onclick="setMode('wall')">🟠 外壁</button>
+                <button class="type-btn" id="typeWin" onclick="setMode('window')">🟢 窓・除外</button>
             </div>
-            <button class="btn btn-orange" id="aiBtn" onclick="runAIDetect()">✨ Geminiで自動検出</button>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn" onclick="undo()" style="background:var(--bg3); color:#fff;">↩ 戻す</button>
-                <button class="btn" onclick="resetCanvas()" style="background:var(--bg3); color:#fff;">🗑 クリア</button>
-            </div>
-            <div style="background: var(--bg3); padding: 15px; border-radius: 8px; text-align: center;">
-                <div style="font-size: 24px; font-weight: 800; color: var(--orange);" id="netArea">0.0</div>
-                <div style="font-size: 10px;">積算面積(m²)</div>
+            <button class="btn btn-orange" id="aiBtn" onclick="runAIDetect()">✨ AIで建物を自動検出</button>
+            <div style="background:#1a1d24; padding:15px; border-radius:8px; text-align:center;">
+                <div style="font-size:24px; color:var(--orange);" id="netArea">0.0</div><div>m²</div>
             </div>
         </div>
     </div>
 </div>
 
 <div id="settingsModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:1000; align-items:center; justify-content:center;">
-    <div style="background:var(--bg2); padding:30px; border-radius:12px; width:90%; max-width:400px; border:1px solid var(--border);">
+    <div style="background:#111; padding:30px; border-radius:12px; width:90%; max-width:400px; border:1px solid #333;">
         <h3>システム設定</h3>
-        <input type="password" id="apiKey" placeholder="Gemini API Key">
-        <button class="btn btn-primary" onclick="saveSettings()" style="margin-top:15px;">保存</button>
+        <label>Gemini API Key</label><input type="password" id="apiKey" style="width:100%; padding:8px; margin:10px 0;">
+        <label>GAS URL (WebApp)</label><input type="text" id="gasId" style="width:100%; padding:8px; margin:10px 0;">
+        <button class="btn btn-primary" onclick="saveSettings()">保存</button>
     </div>
 </div>
 
 <script>
-let app = { mode: 'wall', regions: [], ppm: 100, buildingMask: null };
+let app = { mode: 'wall', regions: [], buildingMask: null };
 
 window.onload = () => {
     const saved = JSON.parse(localStorage.getItem('roofapp_settings') || '{}');
-    if (saved.apiKey) document.getElementById('apiKey').value = saved.apiKey;
+    document.getElementById('apiKey').value = saved.apiKey || '';
+    document.getElementById('gasId').value = saved.gasUrl || '';
 };
 
 function saveSettings() {
-    localStorage.setItem('roofapp_settings', JSON.stringify({ apiKey: document.getElementById('apiKey').value.trim() }));
+    localStorage.setItem('roofapp_settings', JSON.stringify({
+        apiKey: document.getElementById('apiKey').value.trim(),
+        gasUrl: document.getElementById('gasId').value.trim()
+    }));
     document.getElementById('settingsModal').style.display = 'none';
-    showToast("保存完了");
+    alert("保存しました");
 }
 
 function openSettings() { document.getElementById('settingsModal').style.display = 'flex'; }
-
 function startProject() {
-    if (!document.getElementById('clientName').value) return showToast("名前を入力してください");
+    if(!document.getElementById('clientName').value) return alert("名前を入力してください");
     document.getElementById('setupSection').style.display = 'none';
     document.getElementById('measuringSection').style.display = 'block';
 }
@@ -110,74 +101,58 @@ function handleFile(input) {
         const img = new Image();
         img.onload = () => {
             const cv = document.getElementById('photoCanvas');
-            const bcv = document.getElementById('buildingCanvas');
-            const scv = document.getElementById('selectCanvas');
             const W = Math.min(800, window.innerWidth - 40);
             const H = img.height * (W / img.width);
-            [cv, bcv, scv].forEach(c => { c.width = W; c.height = H; });
+            [cv, document.getElementById('buildingCanvas'), document.getElementById('selectCanvas')].forEach(c => { c.width = W; c.height = H; });
             cv.getContext('2d').drawImage(img, 0, 0, W, H);
             document.getElementById('canvasWrap').style.display = 'block';
-            document.getElementById('uploadZone').style.display = 'none';
             document.getElementById('toolBar').style.display = 'block';
-            scv.onclick = handleCanvasClick;
+            document.getElementById('uploadZone').style.display = 'none';
+            document.getElementById('selectCanvas').onclick = handleCanvasClick;
         };
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
 }
 
-// 🔥 究極の修正：SDKを使わず、URLを完全にマニュアル操作して 404 と CORS を同時に殺す
+// ✨ GASを経由してAI解析を行う新ロジック（CORSを回避）
 async function runAIDetect() {
-    const key = document.getElementById('apiKey').value.trim();
-    if (!key) return showToast("APIキーを設定してください");
-    const btn = document.getElementById('aiBtn');
-    btn.disabled = true;
-    showToast("AI解析中...");
+    const saved = JSON.parse(localStorage.getItem('roofapp_settings') || '{}');
+    if (!saved.apiKey || !saved.gasUrl) return alert("設定からAPIキーとGASのURLを入力してください");
+    
+    document.getElementById('aiBtn').innerText = "GAS経由でAI解析中...";
+    document.getElementById('aiBtn').disabled = true;
 
     const canvas = document.getElementById('photoCanvas');
     const base64 = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
 
-    // 404の真犯人「:generateContent」を排除した、ベタ書きの最新URL
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash?key=${key}`;
-
-    const payload = {
-        contents: [{
-            parts: [
-                { text: "Return ONLY JSON: {\"points\": [[y, x], ...]} for building outline (0-1000 normalized)." },
-                { inline_data: { mime_type: "image/jpeg", data: base64 } }
-            ]
-        }]
-    };
-
     try {
-        const res = await fetch(url, {
+        const res = await fetch(saved.gasUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ action: 'runAI', apiKey: saved.apiKey, image: base64 })
         });
-
         const data = await res.json();
-        if (data.error) throw new Error(data.error.message);
-
+        
         const text = data.candidates[0].content.parts[0].text;
         const json = JSON.parse(text.match(/\{.*\}/s)[0]);
         const pts = json.points.map(p => [p[1]/1000, p[0]/1000]);
 
         applyMask(pts);
-        showToast("検出成功！");
+        alert("検出成功！");
     } catch (e) {
         console.error(e);
-        showToast("失敗: " + e.message);
+        alert("エラー：GASのデプロイ設定（全員に公開）を確認してください。");
     } finally {
-        btn.disabled = false;
+        document.getElementById('aiBtn').innerText = "✨ AIで建物を自動検出";
+        document.getElementById('aiBtn').disabled = false;
     }
 }
 
 function applyMask(pts) {
-    const cv = document.getElementById('photoCanvas');
     const bcv = document.getElementById('buildingCanvas');
     const ctx = bcv.getContext('2d');
-    const W = cv.width, H = cv.height;
+    const W = bcv.width, H = bcv.height;
+    
     const off = document.createElement('canvas'); off.width = W; off.height = H;
     const octx = off.getContext('2d');
     octx.beginPath();
@@ -186,6 +161,7 @@ function applyMask(pts) {
     const data = octx.getImageData(0,0,W,H).data;
     app.buildingMask = new Uint8Array(W*H);
     for(let i=0; i<W*H; i++) app.buildingMask[i] = data[i*4+3]>127 ? 1 : 0;
+
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(0,0,W,H);
     ctx.globalCompositeOperation = 'destination-out';
@@ -200,8 +176,8 @@ function handleCanvasClick(e) {
     const rect = scv.getBoundingClientRect();
     const x = Math.round((e.clientX - rect.left) * (scv.width / rect.width));
     const y = Math.round((e.clientY - rect.top) * (scv.height / rect.height));
-    if (app.buildingMask && app.buildingMask[y * scv.width + x] === 0) return showToast("建物の外です");
-    app.regions.push({ x, y, type: app.mode, area: 25.0 / (app.ppm/100) });
+    if (app.buildingMask && app.buildingMask[y * scv.width + x] === 0) return alert("建物の外です");
+    app.regions.push({ x, y, type: app.mode, area: 25.0 });
     draw();
 }
 
@@ -219,14 +195,8 @@ function draw() {
 
 function setMode(m) {
     app.mode = m;
-    document.getElementById('typeWall').classList.toggle('active', m === 'wall');
-    document.getElementById('typeWin').classList.toggle('active', m === 'window');
-}
-function undo() { app.regions.pop(); draw(); }
-function resetCanvas() { app.regions = []; app.buildingMask = null; draw(); document.getElementById('buildingCanvas').getContext('2d').clearRect(0,0,800,800); }
-function showToast(m) {
-    const t = document.createElement('div'); t.className = 'toast'; t.textContent = m;
-    document.body.appendChild(t); setTimeout(() => t.remove(), 3000);
+    document.getElementById('typeWall').classList.toggle('active-wall', m === 'wall');
+    document.getElementById('typeWin').classList.toggle('active-wall', m === 'window');
 }
 </script>
 </body>
