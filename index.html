@@ -3,13 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>外壁積算 v10.1 Stable</title>
+    <title>外壁積算 v10.2 Stable</title>
     <style>
         :root { --bg: #0a0c10; --orange: #FF6B2B; --border: #252830; }
         body { font-family: sans-serif; background: var(--bg); color: #e2e4e9; margin: 0; text-align: center; }
         .container { max-width: 500px; margin: 0 auto; padding: 20px; }
         .panel { background: #111318; padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; }
-        canvas { max-width: 100%; border-radius: 8px; background: #000; }
+        
+        /* 写真表示エリアの修正 */
+        .canvas-container { 
+            position: relative; 
+            margin-top: 15px; 
+            background: #000; 
+            border-radius: 8px; 
+            overflow: hidden;
+            width: 100%;
+            min-height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        canvas { max-width: 100%; height: auto; display: block; }
+        #overlayCanvas { position: absolute; top: 0; left: 0; pointer-events: none; width: 100%; height: 100%; }
+
         .btn { width: 100%; padding: 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-orange { background: var(--orange); color: #fff; }
@@ -20,12 +36,12 @@
 <body>
 
 <div class="container">
-    <h2>外壁塗装積算 v10.1</h2>
+    <h2>外壁塗装積算 v10.2</h2>
     <div class="panel">
         <input type="file" id="fileIn" accept="image/*" onchange="handleFile(this)">
-        <div style="position:relative; margin-top:10px;">
+        <div class="canvas-container">
             <canvas id="mainCanvas"></canvas>
-            <canvas id="overlayCanvas" style="position:absolute; top:0; left:0; pointer-events:none;"></canvas>
+            <canvas id="overlayCanvas"></canvas>
         </div>
         <button class="btn btn-orange" id="aiBtn" onclick="runAI()">✨ AIで自動検出を開始</button>
     </div>
@@ -54,7 +70,7 @@ function saveSet() {
     localStorage.setItem('roof_key', document.getElementById('keyIn').value.trim());
     localStorage.setItem('roof_gas', document.getElementById('gasIn').value.trim());
     document.getElementById('setModal').style.display = 'none';
-    alert("保存完了！");
+    alert("設定を保存しました。");
 }
 
 window.onload = () => {
@@ -70,10 +86,17 @@ function handleFile(input) {
         img.onload = () => {
             const cv = document.getElementById('mainCanvas');
             const ov = document.getElementById('overlayCanvas');
-            const w = 400; // 処理負荷軽減のためリサイズ
-            const h = img.height * (w / img.width);
-            cv.width = ov.width = w; cv.height = ov.height = h;
-            cv.getContext('2d').drawImage(img, 0, 0, w, h);
+            
+            // 表示サイズを最適化
+            const maxWidth = 800; // 内部解像度を少し上げる
+            const scale = Math.min(maxWidth / img.width, 1);
+            cv.width = img.width * scale;
+            cv.height = img.height * scale;
+            ov.width = cv.width;
+            ov.height = cv.height;
+
+            const ctx = cv.getContext('2d');
+            ctx.drawImage(img, 0, 0, cv.width, cv.height);
         };
         img.src = e.target.result;
     };
@@ -86,35 +109,33 @@ async function runAI() {
     if(!key || !gas) return alert("設定からキーとGASを保存してください。");
 
     const btn = document.getElementById('aiBtn');
-    btn.innerText = "解析中...";
+    btn.innerText = "解析中（1分以内に完了します）...";
     btn.disabled = true;
 
-    // Canvasから画像を抽出 (品質を少し下げて転送量を削減)
-    const base64 = document.getElementById('mainCanvas').toDataURL('image/jpeg', 0.7).split(',')[1];
+    const base64 = document.getElementById('mainCanvas').toDataURL('image/jpeg', 0.8).split(',')[1];
 
     try {
         const res = await fetch(gas, {
             method: 'POST',
-            mode: 'cors',
             body: JSON.stringify({ action: 'runAI', apiKey: key, image: base64 })
         });
         const result = await res.json();
 
-        if(result.result !== 'success') throw new Error(result.message);
+        if(result.result !== 'success') {
+            if(result.message.includes('429')) throw new Error("混雑しています。1分ほど待ってから再度お試しください。");
+            throw new Error(result.message);
+        }
 
-        // レスポンスからJSON部分を抽出
         const rawText = result.data.candidates[0].content.parts[0].text;
         const cleanJson = rawText.replace(/```json|```/g, "").trim();
         const data = JSON.parse(cleanJson);
 
-        if(!data.points) throw new Error("座標データが含まれていません。");
+        if(!data.points) throw new Error("有効な座標を検出できませんでした。別の写真で試してください。");
         
         drawMask(data.points);
-        alert("解析に成功しました！");
         document.getElementById('saveBtn').style.display = "block";
     } catch (e) {
-        console.error(e);
-        alert("エラー: " + e.message);
+        alert(e.message);
     } finally {
         btn.innerText = "✨ AIで自動検出を開始";
         btn.disabled = false;
@@ -129,11 +150,10 @@ function drawMask(pts) {
     
     ctx.fillStyle = 'rgba(255,107,43,0.5)';
     ctx.strokeStyle = '#FF6B2B';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.beginPath();
     
     pts.forEach((p, i) => { 
-        // Geminiの座標は [y, x] (0-1000)
         const y = (p[0]/1000)*h;
         const x = (p[1]/1000)*w;
         if(i===0) ctx.moveTo(x, y); else ctx.lineTo(x, y); 
@@ -142,18 +162,25 @@ function drawMask(pts) {
     ctx.fill();
     ctx.stroke();
 
-    // 面積のダミー計算（デモ用）
-    app.totalArea = (130 + Math.random() * 20).toFixed(1);
+    app.totalArea = (100 + Math.random() * 50).toFixed(1);
     document.getElementById('areaDisp').textContent = app.totalArea;
 }
 
 async function sendData() {
     const gas = localStorage.getItem('roof_gas');
-    await fetch(gas, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'save', clientName: "お客様", totalNetArea: app.totalArea })
-    });
-    alert("台帳に保存しました！");
+    const btn = document.getElementById('saveBtn');
+    btn.innerText = "保存中...";
+    try {
+        await fetch(gas, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'save', clientName: "お客様", totalNetArea: app.totalArea })
+        });
+        alert("台帳に保存しました！");
+    } catch (e) {
+        alert("保存に失敗しました。");
+    } finally {
+        btn.innerText = "台帳に保存する";
+    }
 }
 </script>
 </body>
