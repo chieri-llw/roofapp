@@ -3,52 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>外壁積算 v10.2 Stable</title>
+    <title>外壁積算 v10.3 Debug</title>
     <style>
         :root { --bg: #0a0c10; --orange: #FF6B2B; --border: #252830; }
         body { font-family: sans-serif; background: var(--bg); color: #e2e4e9; margin: 0; text-align: center; }
         .container { max-width: 500px; margin: 0 auto; padding: 20px; }
         .panel { background: #111318; padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; }
-        
-        /* 写真表示エリアの修正 */
-        .canvas-container { 
-            position: relative; 
-            margin-top: 15px; 
-            background: #000; 
-            border-radius: 8px; 
-            overflow: hidden;
-            width: 100%;
-            min-height: 200px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+        .canvas-container { position: relative; margin-top: 15px; background: #000; border-radius: 8px; overflow: hidden; width: 100%; display: flex; justify-content: center; align-items: center; }
         canvas { max-width: 100%; height: auto; display: block; }
-        #overlayCanvas { position: absolute; top: 0; left: 0; pointer-events: none; width: 100%; height: 100%; }
-
+        #overlayCanvas { position: absolute; top: 0; left: 0; pointer-events: none; }
         .btn { width: 100%; padding: 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-orange { background: var(--orange); color: #fff; }
-        .btn-blue { background: #3b82f6; color: #fff; }
         .res-val { font-size: 32px; color: var(--orange); font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>外壁塗装積算 v10.2</h2>
+    <h2>外壁塗装積算 v10.3</h2>
     <div class="panel">
         <input type="file" id="fileIn" accept="image/*" onchange="handleFile(this)">
         <div class="canvas-container">
             <canvas id="mainCanvas"></canvas>
             <canvas id="overlayCanvas"></canvas>
         </div>
-        <button class="btn btn-orange" id="aiBtn" onclick="runAI()">✨ AIで自動検出を開始</button>
+        <button class="btn btn-orange" id="aiBtn" onclick="runAI()">✨ AI解析を実行</button>
     </div>
     <div class="panel">
         <div class="res-val" id="areaDisp">0.0</div>
         <div>積算面積 (m²)</div>
-        <button class="btn btn-blue" id="saveBtn" style="display:none; margin-top:20px;" onclick="sendData()">台帳に保存する</button>
     </div>
     <button onclick="openSet()" style="color:#666; background:none; border:none; cursor:pointer; font-size: 12px;">⚙ 設定を確認</button>
 </div>
@@ -70,7 +53,7 @@ function saveSet() {
     localStorage.setItem('roof_key', document.getElementById('keyIn').value.trim());
     localStorage.setItem('roof_gas', document.getElementById('gasIn').value.trim());
     document.getElementById('setModal').style.display = 'none';
-    alert("設定を保存しました。");
+    alert("保存しました");
 }
 
 window.onload = () => {
@@ -86,17 +69,11 @@ function handleFile(input) {
         img.onload = () => {
             const cv = document.getElementById('mainCanvas');
             const ov = document.getElementById('overlayCanvas');
-            
-            // 表示サイズを最適化
-            const maxWidth = 800; // 内部解像度を少し上げる
+            const maxWidth = 600; // 送信データ量を抑える
             const scale = Math.min(maxWidth / img.width, 1);
-            cv.width = img.width * scale;
-            cv.height = img.height * scale;
-            ov.width = cv.width;
-            ov.height = cv.height;
-
-            const ctx = cv.getContext('2d');
-            ctx.drawImage(img, 0, 0, cv.width, cv.height);
+            cv.width = ov.width = img.width * scale;
+            cv.height = ov.height = img.height * scale;
+            cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
         };
         img.src = e.target.result;
     };
@@ -106,38 +83,38 @@ function handleFile(input) {
 async function runAI() {
     const key = localStorage.getItem('roof_key');
     const gas = localStorage.getItem('roof_gas');
-    if(!key || !gas) return alert("設定からキーとGASを保存してください。");
+    if(!key || !gas) return alert("設定を完了してください");
 
     const btn = document.getElementById('aiBtn');
-    btn.innerText = "解析中（1分以内に完了します）...";
+    btn.innerText = "通信中...";
     btn.disabled = true;
 
-    const base64 = document.getElementById('mainCanvas').toDataURL('image/jpeg', 0.8).split(',')[1];
+    // データ量をさらに削減 (0.4)
+    const base64 = document.getElementById('mainCanvas').toDataURL('image/jpeg', 0.4).split(',')[1];
 
     try {
         const res = await fetch(gas, {
             method: 'POST',
             body: JSON.stringify({ action: 'runAI', apiKey: key, image: base64 })
         });
+        
         const result = await res.json();
 
-        if(result.result !== 'success') {
-            if(result.message.includes('429')) throw new Error("混雑しています。1分ほど待ってから再度お試しください。");
-            throw new Error(result.message);
+        // 成功時
+        if(result.result === 'success') {
+            const rawText = result.data.candidates[0].content.parts[0].text;
+            const data = JSON.parse(rawText.replace(/```json|```/g, "").trim());
+            drawMask(data.points);
+            alert("成功しました！");
+        } else {
+            // ★ここが重要：エラーの生データを表示
+            console.error("Server Error:", result);
+            alert("サーバーエラー詳細:\n" + (result.message || JSON.stringify(result)));
         }
-
-        const rawText = result.data.candidates[0].content.parts[0].text;
-        const cleanJson = rawText.replace(/```json|```/g, "").trim();
-        const data = JSON.parse(cleanJson);
-
-        if(!data.points) throw new Error("有効な座標を検出できませんでした。別の写真で試してください。");
-        
-        drawMask(data.points);
-        document.getElementById('saveBtn').style.display = "block";
     } catch (e) {
-        alert(e.message);
+        alert("ブラウザエラー:\n" + e.message);
     } finally {
-        btn.innerText = "✨ AIで自動検出を開始";
+        btn.innerText = "✨ AI解析を実行";
         btn.disabled = false;
     }
 }
@@ -147,40 +124,16 @@ function drawMask(pts) {
     const ctx = ov.getContext('2d');
     const w = ov.width, h = ov.height;
     ctx.clearRect(0,0,w,h);
-    
     ctx.fillStyle = 'rgba(255,107,43,0.5)';
     ctx.strokeStyle = '#FF6B2B';
     ctx.lineWidth = 3;
     ctx.beginPath();
-    
     pts.forEach((p, i) => { 
-        const y = (p[0]/1000)*h;
-        const x = (p[1]/1000)*w;
+        const y = (p[0]/1000)*h; const x = (p[1]/1000)*w;
         if(i===0) ctx.moveTo(x, y); else ctx.lineTo(x, y); 
     });
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    app.totalArea = (100 + Math.random() * 50).toFixed(1);
-    document.getElementById('areaDisp').textContent = app.totalArea;
-}
-
-async function sendData() {
-    const gas = localStorage.getItem('roof_gas');
-    const btn = document.getElementById('saveBtn');
-    btn.innerText = "保存中...";
-    try {
-        await fetch(gas, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'save', clientName: "お客様", totalNetArea: app.totalArea })
-        });
-        alert("台帳に保存しました！");
-    } catch (e) {
-        alert("保存に失敗しました。");
-    } finally {
-        btn.innerText = "台帳に保存する";
-    }
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    document.getElementById('areaDisp').textContent = (100 + Math.random() * 50).toFixed(1);
 }
 </script>
 </body>
