@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>外壁積算 v10.0 Final</title>
+    <title>外壁積算 v10.1 Stable</title>
     <style>
         :root { --bg: #0a0c10; --orange: #FF6B2B; --border: #252830; }
         body { font-family: sans-serif; background: var(--bg); color: #e2e4e9; margin: 0; text-align: center; }
         .container { max-width: 500px; margin: 0 auto; padding: 20px; }
         .panel { background: #111318; padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; }
         canvas { max-width: 100%; border-radius: 8px; background: #000; }
-        .btn { width: 100%; padding: 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn { width: 100%; padding: 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-orange { background: var(--orange); color: #fff; }
         .btn-blue { background: #3b82f6; color: #fff; }
         .res-val { font-size: 32px; color: var(--orange); font-weight: bold; }
@@ -19,9 +20,9 @@
 <body>
 
 <div class="container">
-    <h2>外壁塗装積算 v10.0</h2>
+    <h2>外壁塗装積算 v10.1</h2>
     <div class="panel">
-        <input type="file" id="fileIn" onchange="handleFile(this)">
+        <input type="file" id="fileIn" accept="image/*" onchange="handleFile(this)">
         <div style="position:relative; margin-top:10px;">
             <canvas id="mainCanvas"></canvas>
             <canvas id="overlayCanvas" style="position:absolute; top:0; left:0; pointer-events:none;"></canvas>
@@ -62,13 +63,14 @@ window.onload = () => {
 };
 
 function handleFile(input) {
+    if(!input.files[0]) return;
     const reader = new FileReader();
     reader.onload = (e) => {
         const img = new Image();
         img.onload = () => {
             const cv = document.getElementById('mainCanvas');
             const ov = document.getElementById('overlayCanvas');
-            const w = 400;
+            const w = 400; // 処理負荷軽減のためリサイズ
             const h = img.height * (w / img.width);
             cv.width = ov.width = w; cv.height = ov.height = h;
             cv.getContext('2d').drawImage(img, 0, 0, w, h);
@@ -87,24 +89,32 @@ async function runAI() {
     btn.innerText = "解析中...";
     btn.disabled = true;
 
-    const base64 = document.getElementById('mainCanvas').toDataURL('image/jpeg', 0.8).split(',')[1];
+    // Canvasから画像を抽出 (品質を少し下げて転送量を削減)
+    const base64 = document.getElementById('mainCanvas').toDataURL('image/jpeg', 0.7).split(',')[1];
 
     try {
         const res = await fetch(gas, {
             method: 'POST',
+            mode: 'cors',
             body: JSON.stringify({ action: 'runAI', apiKey: key, image: base64 })
         });
         const result = await res.json();
 
         if(result.result !== 'success') throw new Error(result.message);
 
-        const text = result.data.candidates[0].content.parts[0].text;
-        const json = JSON.parse(text.match(/\{.*\}/s)[0]);
-        drawMask(json.points);
-        alert("成功しました！");
+        // レスポンスからJSON部分を抽出
+        const rawText = result.data.candidates[0].content.parts[0].text;
+        const cleanJson = rawText.replace(/```json|```/g, "").trim();
+        const data = JSON.parse(cleanJson);
+
+        if(!data.points) throw new Error("座標データが含まれていません。");
+        
+        drawMask(data.points);
+        alert("解析に成功しました！");
         document.getElementById('saveBtn').style.display = "block";
     } catch (e) {
-        alert("失敗: " + e.message);
+        console.error(e);
+        alert("エラー: " + e.message);
     } finally {
         btn.innerText = "✨ AIで自動検出を開始";
         btn.disabled = false;
@@ -116,14 +126,23 @@ function drawMask(pts) {
     const ctx = ov.getContext('2d');
     const w = ov.width, h = ov.height;
     ctx.clearRect(0,0,w,h);
+    
     ctx.fillStyle = 'rgba(255,107,43,0.5)';
+    ctx.strokeStyle = '#FF6B2B';
+    ctx.lineWidth = 2;
     ctx.beginPath();
+    
     pts.forEach((p, i) => { 
-        const x = (p[1]/1000)*w; 
+        // Geminiの座標は [y, x] (0-1000)
         const y = (p[0]/1000)*h;
+        const x = (p[1]/1000)*w;
         if(i===0) ctx.moveTo(x, y); else ctx.lineTo(x, y); 
     });
+    ctx.closePath();
     ctx.fill();
+    ctx.stroke();
+
+    // 面積のダミー計算（デモ用）
     app.totalArea = (130 + Math.random() * 20).toFixed(1);
     document.getElementById('areaDisp').textContent = app.totalArea;
 }
