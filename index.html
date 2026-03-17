@@ -11,16 +11,13 @@
     </style>
 </head>
 <body>
-
 <div class="panel">
     <h3>直接通信テスト版</h3>
     <input type="file" id="fileIn" onchange="handleFile(this)">
     <canvas id="mainCanvas"></canvas>
     <button class="btn" id="aiBtn" onclick="runDirectAI()">直接AI解析を実行</button>
 </div>
-
 <div id="res" style="color: #FF6B2B; font-weight: bold; margin-top: 20px;">結果待ち...</div>
-
 <script>
 function handleFile(input) {
     const reader = new FileReader();
@@ -37,14 +34,16 @@ function handleFile(input) {
 }
 
 async function runDirectAI() {
-    const key = prompt("新しく作ったAPIキーを入力してください");
-    if(!key) return;
+    const key = prompt("APIキーを入力してください");
+    if (!key) return;
 
     const btn = document.getElementById('aiBtn');
     btn.innerText = "通信中...";
+    btn.disabled = true;
+
     const base64 = document.getElementById('mainCanvas').toDataURL('image/jpeg', 0.5).split(',')[1];
 
-    // GASを通さず、Googleに直接投げるURL
+    // gemini-2.0-flash (gemini-2.0-flash-lite は廃止)
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
 
     const payload = {
@@ -62,14 +61,16 @@ async function runDirectAI() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
-        
+
         const result = await res.json();
-        
+
         if (res.status === 429) {
-            document.getElementById('res').innerText = "❌ まだ429制限中です。アカウントがロックされています。";
+            document.getElementById('res').innerText = "❌ 429 制限中です。請求先アカウントを有効化してください。";
+        } else if (res.status === 404) {
+            document.getElementById('res').innerText = "❌ 404 モデルが見つかりません: " + (result?.error?.message || "");
         } else if (res.ok) {
-            document.getElementById('res').innerText = "✅ 成功！GASなしなら通ります。";
-            console.log(result);
+            document.getElementById('res').innerText = "✅ 成功！GASなしで通信できました。";
+            console.log("API応答:", result);
         } else {
             document.getElementById('res').innerText = "Error: " + JSON.stringify(result);
         }
@@ -77,6 +78,7 @@ async function runDirectAI() {
         document.getElementById('res').innerText = "通信エラー（CORS等）: " + e.message;
     } finally {
         btn.innerText = "直接AI解析を実行";
+        btn.disabled = false;
     }
 }
 </script>
