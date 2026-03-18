@@ -2,114 +2,234 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>外壁積算システム v11.0</title>
+    <title>外壁積算 v11.5 Drag & Adjust</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #0a0c10; color: #e8eaf0; font-family: 'Segoe UI', 'Hiragino Sans', sans-serif; min-height: 100vh; padding: 16px; }
-        h1 { text-align: center; font-size: 1.3rem; color: #FF6B2B; padding: 14px 0 10px; letter-spacing: 1px; }
-        .version-tag { text-align: center; font-size: 0.7rem; color: #555; margin-bottom: 16px; }
-        .card { background: #111318; border-radius: 12px; padding: 16px; margin-bottom: 14px; border: 1px solid #1e2130; }
-        .card-title { font-size: 0.75rem; font-weight: bold; color: #FF6B2B; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
-        .card-title::before { content: ''; display: inline-block; width: 3px; height: 14px; background: #FF6B2B; border-radius: 2px; }
-        .form-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
-        .form-group { display: flex; flex-direction: column; gap: 4px; }
-        label { font-size: 0.72rem; color: #888; font-weight: 500; }
-        input[type="text"], input[type="password"] { background: #0e1016; border: 1px solid #2a2e3e; border-radius: 8px; color: #e8eaf0; padding: 9px 12px; font-size: 0.85rem; width: 100%; outline: none; transition: border-color 0.2s; }
-        input[type="text"]:focus, input[type="password"]:focus { border-color: #FF6B2B; }
-        input[type="text"]::placeholder, input[type="password"]::placeholder { color: #444; }
-        .btn { border: none; border-radius: 8px; font-size: 0.85rem; font-weight: bold; cursor: pointer; padding: 11px 16px; width: 100%; transition: opacity 0.2s, transform 0.1s; }
-        .btn:active { transform: scale(0.98); }
-        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        .btn-primary { background: #FF6B2B; color: #fff; }
-        .btn-primary:hover:not(:disabled) { background: #e55c20; }
-        .btn-secondary { background: #1e2130; color: #aaa; }
-        .btn-secondary:hover:not(:disabled) { background: #252840; color: #fff; }
-        .btn-success { background: #1a7a3c; color: #fff; }
-        .btn-success:hover:not(:disabled) { background: #1e8f46; }
-        .btn-row { display: flex; gap: 10px; margin-top: 10px; }
-        .btn-row .btn { flex: 1; }
-        .case-number-display { background: #0e1016; border: 1px solid #FF6B2B44; border-radius: 8px; padding: 10px 14px; font-size: 1rem; font-weight: bold; color: #FF6B2B; text-align: center; letter-spacing: 1px; min-height: 42px; display: flex; align-items: center; justify-content: center; }
-        .case-number-display.empty { color: #333; font-size: 0.78rem; }
-        .upload-area { border: 2px dashed #2a2e3e; border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; transition: border-color 0.2s; position: relative; }
-        .upload-area:hover { border-color: #FF6B2B88; }
-        .upload-area input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-        .upload-icon { font-size: 2rem; color: #333; margin-bottom: 6px; }
-        .upload-text { font-size: 0.8rem; color: #555; }
-        #mainCanvas { width: 100%; display: block; border-radius: 8px; background: #070a0d; }
-        .canvas-wrap { position: relative; margin-top: 12px; }
-        .area-display { background: #0e1016; border: 1px solid #2a2e3e; border-radius: 8px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
-        .area-label { font-size: 0.75rem; color: #666; }
-        .area-value { font-size: 1.1rem; font-weight: bold; color: #e8eaf0; }
-        .area-value.has-value { color: #4fc3f7; }
-        .status-bar { border-radius: 8px; padding: 10px 14px; font-size: 0.78rem; font-weight: 500; margin-top: 10px; display: none; }
-        .status-bar.show { display: block; }
-        .status-bar.info { background: #0d1a2e; color: #4fc3f7; border: 1px solid #1a3a5c; }
-        .status-bar.success { background: #0d1f12; color: #66bb6a; border: 1px solid #1a4026; }
-        .status-bar.error { background: #1f0d0d; color: #ef5350; border: 1px solid #5c1a1a; }
-        .status-bar.warning { background: #1f1a0d; color: #ffa726; border: 1px solid #5c480a; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #ffffff44; border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
-        .api-section { margin-top: 4px; }
-        .api-toggle { font-size: 0.72rem; color: #555; cursor: pointer; text-decoration: underline; background: none; border: none; padding: 4px 0; display: block; width: 100%; text-align: left; }
-        .api-toggle:hover { color: #888; }
-        #apiKeyField { margin-top: 8px; }
+        :root { --bg: #0a0c10; --orange: #FF6B2B; --border: #252830; }
+        body { font-family: sans-serif; background: var(--bg); color: #e2e4e9; margin: 0; text-align: center; overflow-x: hidden; }
+        .container { max-width: 500px; margin: 0 auto; padding: 20px; }
+        .panel { background: #111318; padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; }
+        
+        .canvas-container { 
+            position: relative; 
+            margin-top: 15px; 
+            background: #000; 
+            border-radius: 8px; 
+            overflow: hidden; 
+            width: 100%; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            touch-action: none; /* スマホのスクロールを無効化して操作しやすく */
+        }
+        canvas { max-width: 100%; height: auto; display: block; }
+        #overlayCanvas { position: absolute; top: 0; left: 0; cursor: crosshair; }
+
+        .btn { width: 100%; padding: 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; }
+        .btn-orange { background: var(--orange); color: #fff; }
+        .res-val { font-size: 32px; color: var(--orange); font-weight: bold; }
+        .hint { font-size: 12px; color: #888; margin-top: 8px; }
     </style>
 </head>
 <body>
-<h1>🏠 外壁積算システム</h1>
-<div class="version-tag">v11.0 — Gemini 2.5 Flash + GAS連携</div>
-<div class="card">
-    <div class="card-title">① 案件情報</div>
-    <div class="form-row">
-        <div class="form-group"><label>事業者コード</label><input type="text" id="bizCode" placeholder="例: NK" maxlength="10"></div>
-        <div class="form-group"><label>依頼主名</label><input type="text" id="clientName" placeholder="例: 田中"></div>
-        <div class="form-group"><label>住所（任意）</label><input type="text" id="address" placeholder="例: 東京都渋谷区1-1-1"></div>
+
+<div class="container">
+    <h2>外壁塗装積算 v11.5</h2>
+    <div class="panel">
+        <input type="file" id="fileIn" accept="image/*" onchange="handleFile(this)">
+        <div class="canvas-container" id="cBox">
+            <canvas id="mainCanvas"></canvas>
+            <canvas id="overlayCanvas"></canvas>
+        </div>
+        <p class="hint">💡 AI解析後、オレンジの角をドラッグして微調整できます</p>
+        <button class="btn btn-orange" id="aiBtn" onclick="runAI()">✨ AIで下書きを作成</button>
     </div>
-    <button class="btn btn-secondary" id="registerBtn" onclick="registerCase()">案件番号を発行</button>
-    <div style="margin-top: 10px;"><div class="case-number-display empty" id="caseNumberDisplay">案件番号を発行してください</div></div>
-    <div class="status-bar" id="registerStatus"></div>
+    
+    <div class="panel">
+        <div class="res-val" id="areaDisp">0.0</div>
+        <div>積算面積 (m²)</div>
+        <button class="btn" style="background:#3b82f6; color:#fff; display:none;" id="saveBtn" onclick="saveData()">台帳に保存</button>
+    </div>
+    
+    <button onclick="openSet()" style="color:#666; background:none; border:none; cursor:pointer; font-size: 12px;">⚙ 設定を確認</button>
 </div>
-<div class="card">
-    <div class="card-title">② 画像アップロード</div>
-    <div class="upload-area" id="uploadArea">
-        <div class="upload-icon">📷</div>
-        <div class="upload-text">タップして外壁写真を選択</div>
-        <input type="file" accept="image/*" onchange="handleFile(this)" id="fileInput">
+
+<div id="setModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#111; padding:30px; border-radius:12px; border:1px solid #333; width:85%;">
+        <h3>システム設定</h3>
+        <input type="password" id="keyIn" placeholder="Gemini API Key" style="width:100%; padding:10px; margin-bottom:10px; background:#000; color:#fff; border:1px solid #444;">
+        <input type="text" id="gasIn" placeholder="GAS WebApp URL" style="width:100%; padding:10px; margin-bottom:20px; background:#000; color:#fff; border:1px solid #444;">
+        <button class="btn btn-orange" onclick="saveSet()">保存して閉じる</button>
     </div>
-    <div class="canvas-wrap"><canvas id="mainCanvas"></canvas></div>
-    <div class="area-display"><span class="area-label">推定面積</span><span class="area-value" id="areaDisplay">—</span></div>
-    <div class="api-section">
-        <button class="api-toggle" onclick="toggleApiKey()">▸ Gemini APIキーを設定</button>
-        <div id="apiKeyField" style="display:none;"><input type="password" id="apiKey" placeholder="AIzaSy..."></div>
-    </div>
-    <div class="btn-row">
-        <button class="btn btn-primary" id="aiBtn" onclick="runAI()" disabled>🤖 AI解析</button>
-        <button class="btn btn-secondary" id="clearBtn" onclick="clearCanvas()" disabled>クリア</button>
-    </div>
-    <div class="status-bar" id="aiStatus"></div>
 </div>
-<div class="card">
-    <div class="card-title">③ 積算記録に保存</div>
-    <button class="btn btn-success" id="saveBtn" onclick="saveAnalysis()" disabled>💾 スプレッドシートに保存</button>
-    <div class="status-bar" id="saveStatus"></div>
-</div>
+
 <script>
-const GAS_URL='https://script.google.com/macros/s/AKfycbyr775Ax3nrWpb9VDXyJ6ObNCZ3aIgAEaKV0h84InESCAt9oTh6c2jCSNuapDH0J-l8/exec';
-let currentCaseNumber=null,currentArea=null,imageLoaded=false,polygonPoints=null;
-function toggleApiKey(){const f=document.getElementById('apiKeyField'),btn=document.querySelector('.api-toggle');if(f.style.display==='none'){f.style.display='block';btn.textContent='▾ Gemini APIキーを設定';}else{f.style.display='none';btn.textContent='▸ Gemini APIキーを設定';}}
-function showStatus(id,msg,type){const el=document.getElementById(id);el.textContent=msg;el.className='status-bar show '+type;}
-function hideStatus(id){document.getElementById(id).className='status-bar';}
-async function registerCase(){const code=document.getElementById('bizCode').value.trim(),name=document.getElementById('clientName').value.trim(),addr=document.getElementById('address').value.trim();if(!code||!name){showStatus('registerStatus','⚠️ 事業者コードと依頼主名を入力してください','warning');return;}const btn=document.getElementById('registerBtn');btn.innerHTML='<span class="spinner"></span>発行中...';btn.disabled=true;hideStatus('registerStatus');try{const res=await postToGAS({action:'registerCase',code,name,address:addr});if(res.result==='success'){currentCaseNumber=res.caseNumber;const disp=document.getElementById('caseNumberDisplay');disp.textContent=currentCaseNumber;disp.classList.remove('empty');showStatus('registerStatus','✅ 案件番号を発行しました','success');updateSaveButton();}else{showStatus('registerStatus','❌ '+(res.message||'エラーが発生しました'),'error');}}catch(e){showStatus('registerStatus','❌ 通信エラー: '+e.message,'error');}finally{btn.innerHTML='案件番号を発行';btn.disabled=false;}}
-function handleFile(input){if(!input.files[0])return;const reader=new FileReader();reader.onload=(e)=>{const img=new Image();img.onload=()=>{const cv=document.getElementById('mainCanvas');const maxW=cv.parentElement.clientWidth||360;cv.width=maxW;cv.height=Math.round(img.height*(maxW/img.width));const ctx=cv.getContext('2d');ctx.drawImage(img,0,0,cv.width,cv.height);imageLoaded=true;polygonPoints=null;currentArea=null;document.getElementById('areaDisplay').textContent='—';document.getElementById('areaDisplay').classList.remove('has-value');const area=document.getElementById('uploadArea');area.querySelector('.upload-icon').textContent='✅';area.querySelector('.upload-text').textContent=input.files[0].name;document.getElementById('aiBtn').disabled=false;document.getElementById('clearBtn').disabled=false;updateSaveButton();};img.src=e.target.result;};reader.readAsDataURL(input.files[0]);}
-async function runAI(){if(!imageLoaded)return;const apiKey=document.getElementById('apiKey').value.trim();if(!apiKey){showStatus('aiStatus','⚠️ Gemini APIキーを入力してください（「APIキーを設定」をタップ）','warning');document.getElementById('apiKeyField').style.display='block';document.querySelector('.api-toggle').textContent='▾ Gemini APIキーを設定';return;}const btn=document.getElementById('aiBtn');btn.innerHTML='<span class="spinner"></span>AI解析中...';btn.disabled=true;showStatus('aiStatus','🔍 Gemini 2.5 Flashで外壁輪郭を検出中...','info');try{const cv=document.getElementById('mainCanvas');const base64=cv.toDataURL('image/jpeg',0.7).split(',')[1];const res=await postToGAS({action:'runAI',apiKey,image:base64});if(res.result==='success'){const aiData=res.data;const rawText=aiData.candidates?.[0]?.content?.parts?.[0]?.text||'';let parsed;try{const m=rawText.match(/\{[\s\S]*\}/);parsed=JSON.parse(m?m[0]:rawText);}catch{showStatus('aiStatus','❌ JSON解析失敗: '+rawText.substring(0,80),'error');return;}polygonPoints=parsed.points;if(!polygonPoints||polygonPoints.length<3){showStatus('aiStatus','❌ 有効なポイントが取得できませんでした','error');return;}drawPolygon(cv,polygonPoints);const area=calcArea(cv,polygonPoints);currentArea=area;const dispEl=document.getElementById('areaDisplay');dispEl.textContent=area.toLocaleString()+' px²';dispEl.classList.add('has-value');showStatus('aiStatus','✅ 検出完了！ '+polygonPoints.length+'点のポリゴンを描画しました','success');updateSaveButton();}else if(res.result==='ai_error'){showStatus('aiStatus','❌ Gemini APIエラー: '+(res.message||''),'error');}else{showStatus('aiStatus','❌ '+(res.message||'エラーが発生しました'),'error');}}catch(e){showStatus('aiStatus','❌ 通信エラー: '+e.message,'error');}finally{btn.innerHTML='🤖 AI解析';btn.disabled=false;}}
-function drawPolygon(cv,points){const ctx=cv.getContext('2d');const fi=document.getElementById('fileInput');if(fi.files[0]){const img=new Image();img.onload=()=>{ctx.drawImage(img,0,0,cv.width,cv.height);_drawOverlay(ctx,cv,points);};const r=new FileReader();r.onload=(e)=>{img.src=e.target.result;};r.readAsDataURL(fi.files[0]);}else{_drawOverlay(ctx,cv,points);}}
-function _drawOverlay(ctx,cv,points){const toX=(nx)=>nx*cv.width/1000;const toY=(ny)=>ny*cv.height/1000;ctx.beginPath();ctx.moveTo(toX(points[0][1]),toY(points[0][0]));for(let i=1;i<points.length;i++){ctx.lineTo(toX(points[i][1]),toY(points[i][0]));}ctx.closePath();ctx.fillStyle='rgba(255,107,43,0.25)';ctx.fill();ctx.strokeStyle='#FF6B2B';ctx.lineWidth=2.5;ctx.stroke();ctx.fillStyle='#FF6B2B';points.forEach(([y,x])=>{ctx.beginPath();ctx.arc(toX(x),toY(y),3.5,0,Math.PI*2);ctx.fill();});}
-function calcArea(cv,points){const toX=(nx)=>nx*cv.width/1000;const toY=(ny)=>ny*cv.height/1000;let a=0;const n=points.length;for(let i=0;i<n;i++){const j=(i+1)%n;a+=toX(points[i][1])*toY(points[j][0]);a-=toX(points[j][1])*toY(points[i][0]);}return Math.round(Math.abs(a)/2);}
-function clearCanvas(){const cv=document.getElementById('mainCanvas');const ctx=cv.getContext('2d');const fi=document.getElementById('fileInput');if(fi.files[0]){const img=new Image();img.onload=()=>{ctx.drawImage(img,0,0,cv.width,cv.height);};const r=new FileReader();r.onload=(e)=>{img.src=e.target.result;};r.readAsDataURL(fi.files[0]);}else{ctx.clearRect(0,0,cv.width,cv.height);}polygonPoints=null;currentArea=null;document.getElementById('areaDisplay').textContent='—';document.getElementById('areaDisplay').classList.remove('has-value');hideStatus('aiStatus');updateSaveButton();}
-async function saveAnalysis(){if(!currentCaseNumber){showStatus('saveStatus','⚠️ 先に案件番号を発行してください','warning');return;}if(!currentArea){showStatus('saveStatus','⚠️ 先にAI解析を実行してください','warning');return;}const btn=document.getElementById('saveBtn');btn.innerHTML='<span class="spinner"></span>保存中...';btn.disabled=true;hideStatus('saveStatus');try{const res=await postToGAS({action:'saveAnalysis',caseNumber:currentCaseNumber,area:currentArea});if(res.result==='success'){showStatus('saveStatus','✅ '+(res.message||'積算記録に保存しました！'),'success');}else{showStatus('saveStatus','❌ '+(res.message||'エラーが発生しました'),'error');btn.disabled=false;}}catch(e){showStatus('saveStatus','❌ 通信エラー: '+e.message,'error');btn.disabled=false;}finally{btn.innerHTML='💾 スプレッドシートに保存';}}
-function updateSaveButton(){document.getElementById('saveBtn').disabled=!(currentCaseNumber&&currentArea);}
-async function postToGAS(data){const res=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)});if(!res.ok)throw new Error('HTTP '+res.status);return res.json();}
+let app = { 
+    points: [], // {x, y} の配列
+    selectedIdx: -1,
+    imgScale: 1
+};
+
+function openSet() { document.getElementById('setModal').style.display = 'flex'; }
+function saveSet() {
+    localStorage.setItem('roof_key', document.getElementById('keyIn').value.trim());
+    localStorage.setItem('roof_gas', document.getElementById('gasIn').value.trim());
+    document.getElementById('setModal').style.display = 'none';
+    alert("設定を保存しました。");
+}
+
+window.onload = () => {
+    document.getElementById('keyIn').value = localStorage.getItem('roof_key') || '';
+    document.getElementById('gasIn').value = localStorage.getItem('roof_gas') || '';
+    setupEvents();
+};
+
+function handleFile(input) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+            const cv = document.getElementById('mainCanvas');
+            const ov = document.getElementById('overlayCanvas');
+            const w = 600; 
+            const h = img.height * (w / img.width);
+            cv.width = ov.width = w; cv.height = ov.height = h;
+            cv.getContext('2d').drawImage(img, 0, 0, w, h);
+            app.points = []; // 新しい画像にしたらリセット
+            render();
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(input.files[0]);
+}
+
+async function runAI() {
+    const key = localStorage.getItem('roof_key');
+    const gas = localStorage.getItem('roof_gas');
+    if(!key || !gas) return alert("設定からキーとURLを保存してください。");
+
+    const btn = document.getElementById('aiBtn');
+    btn.innerText = "AIが解析中..."; btn.disabled = true;
+
+    const base64 = document.getElementById('mainCanvas').toDataURL('image/jpeg', 0.6).split(',')[1];
+
+    try {
+        const res = await fetch(gas, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'runAI', apiKey: key, image: base64 })
+        });
+        const result = await res.json();
+        if(result.result !== 'success') throw new Error(result.message);
+
+        const text = result.data.candidates[0].content.parts[0].text;
+        const json = JSON.parse(text.replace(/```json|```/g, "").trim());
+        
+        // AIの座標をキャンバスサイズに変換
+        const ov = document.getElementById('overlayCanvas');
+        app.points = json.points.map(p => ({
+            y: (p[0] / 1000) * ov.height,
+            x: (p[1] / 1000) * ov.width
+        }));
+
+        render();
+        document.getElementById('saveBtn').style.display = "block";
+    } catch (e) {
+        alert("エラー: " + e.message);
+    } finally {
+        btn.innerText = "✨ AIで下書きを作成"; btn.disabled = false;
+    }
+}
+
+// 多角形の描画
+function render() {
+    const ov = document.getElementById('overlayCanvas');
+    const ctx = ov.getContext('2d');
+    ctx.clearRect(0, 0, ov.width, ov.height);
+
+    if (app.points.length === 0) return;
+
+    // 塗りつぶし
+    ctx.fillStyle = 'rgba(255, 107, 43, 0.3)';
+    ctx.strokeStyle = '#FF6B2B';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    app.points.forEach((p, i) => {
+        if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
+    });
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // ハンドル（角）の描画
+    app.points.forEach(p => {
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+    });
+
+    calculateArea();
+}
+
+// 面積計算（座標法 / Surveyor's Formula）
+function calculateArea() {
+    if (app.points.length < 3) return;
+    let sum = 0;
+    for (let i = 0; i < app.points.length; i++) {
+        let j = (i + 1) % app.points.length;
+        sum += app.points[i].x * app.points[j].y;
+        sum -= app.points[j].x * app.points[i].y;
+    }
+    // ピクセル面積を仮のm2に変換（実際は基準となる長さが必要ですが、デモ用に係数を使用）
+    const pixelArea = Math.abs(sum) / 2;
+    const realArea = (pixelArea / 500).toFixed(1); // ここはスケーリング調整が必要
+    document.getElementById('areaDisp').textContent = realArea;
+}
+
+// ドラッグ操作のイベント設定
+function setupEvents() {
+    const ov = document.getElementById('overlayCanvas');
+
+    const getPos = (e) => {
+        const rect = ov.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: clientX - rect.left, y: clientY - rect.top };
+    };
+
+    const down = (e) => {
+        const pos = getPos(e);
+        app.selectedIdx = app.points.findIndex(p => Math.hypot(p.x - pos.x, p.y - pos.y) < 20);
+    };
+
+    const move = (e) => {
+        if (app.selectedIdx === -1) return;
+        e.preventDefault();
+        const pos = getPos(e);
+        app.points[app.selectedIdx] = pos;
+        render();
+    };
+
+    const up = () => { app.selectedIdx = -1; };
+
+    ov.addEventListener('mousedown', down);
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+
+    ov.addEventListener('touchstart', down, { passive: false });
+    window.addEventListener('touchmove', move, { passive: false });
+    window.addEventListener('touchend', up);
+}
+
+async function saveData() {
+    const gas = localStorage.getItem('roof_gas');
+    const area = document.getElementById('areaDisp').textContent;
+    await fetch(gas, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'save', totalNetArea: area, clientName: "AI計測依頼" })
+    });
+    alert("台帳に保存しました！");
+}
 </script>
 </body>
 </html>
