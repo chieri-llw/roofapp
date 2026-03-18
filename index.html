@@ -2,102 +2,157 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>外壁積算 v11.5 Drag & Adjust</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>外壁積算 Pro v14.1</title>
     <style>
-        :root { --bg: #0a0c10; --orange: #FF6B2B; --border: #252830; }
-        body { font-family: sans-serif; background: var(--bg); color: #e2e4e9; margin: 0; text-align: center; overflow-x: hidden; }
-        .container { max-width: 500px; margin: 0 auto; padding: 20px; }
-        .panel { background: #111318; padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; }
+        :root { --bg: #0a0c10; --orange: #FF6B2B; --blue: #3b82f6; --border: #252830; }
+        body { font-family: sans-serif; background: var(--bg); color: #e2e4e9; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        .canvas-container { 
-            position: relative; 
-            margin-top: 15px; 
-            background: #000; 
-            border-radius: 8px; 
-            overflow: hidden; 
-            width: 100%; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center;
-            touch-action: none; /* スマホのスクロールを無効化して操作しやすく */
-        }
-        canvas { max-width: 100%; height: auto; display: block; }
-        #overlayCanvas { position: absolute; top: 0; left: 0; cursor: crosshair; }
+        /* サイドバー */
+        .sidebar { width: 320px; background: #111318; border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; box-sizing: border-box; }
+        .case-info { background: #1c1f26; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border); }
+        .input-group { margin-bottom: 12px; }
+        .input-group label { font-size: 11px; color: #888; display: block; margin-bottom: 4px; }
+        .input-group input { width: 100%; background: #000; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 4px; box-sizing: border-box; }
+        
+        /* メイン */
+        .main { flex: 1; position: relative; background: #050505; display: flex; flex-direction: column; }
+        .toolbar { height: 70px; background: #111318; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 10px; }
+        .canvas-wrap { flex: 1; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        canvas { position: absolute; max-width: 100%; max-height: 100%; touch-action: none; }
 
-        .btn { width: 100%; padding: 15px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s; }
-        .btn-orange { background: var(--orange); color: #fff; }
-        .res-val { font-size: 32px; color: var(--orange); font-weight: bold; }
-        .hint { font-size: 12px; color: #888; margin-top: 8px; }
+        /* UI部品 */
+        .btn { padding: 10px 16px; border-radius: 6px; border: 1px solid #444; background: #222; color: #fff; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .btn-orange { background: var(--orange); border: none; }
+        .btn-active { background: #fff; color: #000; }
+        .res-badge { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.85); padding: 20px; border-radius: 12px; border: 1px solid var(--orange); min-width: 150px; text-align: right; }
+        .val { font-size: 36px; color: var(--orange); font-weight: bold; line-height: 1; }
+        .sub-val { font-size: 14px; color: #888; margin-top: 5px; }
+
+        #sideList { flex: 1; overflow-y: auto; margin-top: 10px; }
+        .side-card { background: #1c1f26; padding: 10px; border-radius: 6px; margin-bottom: 8px; font-size: 12px; border-left: 4px solid var(--blue); }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>外壁塗装積算 v11.5</h2>
-    <div class="panel">
-        <input type="file" id="fileIn" accept="image/*" onchange="handleFile(this)">
-        <div class="canvas-container" id="cBox">
-            <canvas id="mainCanvas"></canvas>
-            <canvas id="overlayCanvas"></canvas>
+<div class="sidebar">
+    <h3>案件管理 Phase 1</h3>
+    <div class="case-info">
+        <div class="input-group">
+            <label>事業者コード / 依頼主名</label>
+            <div style="display:flex; gap:5px;">
+                <input type="text" id="opCode" placeholder="NK" style="width:60px;">
+                <input type="text" id="clName" placeholder="田中様">
+            </div>
         </div>
-        <p class="hint">💡 AI解析後、オレンジの角をドラッグして微調整できます</p>
-        <button class="btn btn-orange" id="aiBtn" onclick="runAI()">✨ AIで下書きを作成</button>
+        <button class="btn btn-orange" style="width:100%" onclick="initCase()">案件を新規登録</button>
+        <div id="caseIdDisp" style="margin-top:10px; font-size:12px; color:var(--orange); font-weight:bold;"></div>
     </div>
+
+    <h4>撮影面リスト</h4>
+    <div id="sideList"></div>
     
-    <div class="panel">
-        <div class="res-val" id="areaDisp">0.0</div>
-        <div>積算面積 (m²)</div>
-        <button class="btn" style="background:#3b82f6; color:#fff; display:none;" id="saveBtn" onclick="saveData()">台帳に保存</button>
-    </div>
-    
-    <button onclick="openSet()" style="color:#666; background:none; border:none; cursor:pointer; font-size: 12px;">⚙ 設定を確認</button>
+    <button class="btn" style="background:var(--blue); border:none; margin-top:10px;" onclick="saveRecord()">この面の結果を記録</button>
+    <button class="btn" style="margin-top:10px; font-size:11px;" onclick="openSet()">⚙ 設定（APIキー/GAS）</button>
 </div>
 
-<div id="setModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:1000; align-items:center; justify-content:center;">
-    <div style="background:#111; padding:30px; border-radius:12px; border:1px solid #333; width:85%;">
+<div class="main">
+    <div class="toolbar">
+        <input type="file" id="fileIn" style="display:none;" onchange="handleFile(this)">
+        <button class="btn" onclick="document.getElementById('fileIn').click()">📷 写真読込</button>
+        <button id="modeScale" class="btn" onclick="setMode('scale')">📏 実寸設定(黄線)</button>
+        <button id="modeAdjust" class="btn" onclick="setMode('adjust')">🖱️ 頂点修正</button>
+        <button class="btn btn-orange" onclick="runAI()">✨ AI下書き作成</button>
+        <div id="scaleInput" style="display:none; margin-left:10px;">
+            実寸: <input type="number" id="realLength" value="1800" style="width:70px; background:#000; color:#fff; border:1px solid var(--orange); padding:5px;"> mm
+        </div>
+    </div>
+
+    <div class="canvas-wrap">
+        <canvas id="mainCanvas"></canvas>
+        <canvas id="overlayCanvas"></canvas>
+    </div>
+
+    <div class="res-badge">
+        <div class="val" id="netAreaDisp">0.00</div>
+        <div class="sub-val">純塗装面積 ($m^2$)</div>
+        <div style="font-size:11px; color:#666; margin-top:10px;" id="breakdown">Gross: 0 / Ded: 0</div>
+    </div>
+</div>
+
+<div id="setModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:2000; align-items:center; justify-content:center;">
+    <div style="background:#111; padding:30px; border-radius:12px; width:80%; max-width:400px;">
         <h3>システム設定</h3>
-        <input type="password" id="keyIn" placeholder="Gemini API Key" style="width:100%; padding:10px; margin-bottom:10px; background:#000; color:#fff; border:1px solid #444;">
-        <input type="text" id="gasIn" placeholder="GAS WebApp URL" style="width:100%; padding:10px; margin-bottom:20px; background:#000; color:#fff; border:1px solid #444;">
-        <button class="btn btn-orange" onclick="saveSet()">保存して閉じる</button>
+        <input type="text" id="gasUrl" placeholder="GAS WebApp URL (/exec)" style="width:100%; padding:10px; margin-bottom:10px; background:#000; color:#fff; border:1px solid #444;">
+        <input type="password" id="apiKey" placeholder="Gemini API Key" style="width:100%; padding:10px; margin-bottom:20px; background:#000; color:#fff; border:1px solid #444;">
+        <button class="btn btn-orange" style="width:100%" onclick="saveSettings()">保存して閉じる</button>
     </div>
 </div>
 
 <script>
-let app = { 
-    points: [], // {x, y} の配列
-    selectedIdx: -1,
-    imgScale: 1
+let app = {
+    mode: 'select',
+    caseId: '',
+    parts: [], // {label, active, points[]}
+    scalePts: [], // {x, y} 2点
+    pixelPerMm: 0,
+    img: null,
+    selectedPoint: null
+};
+
+// --- 初期設定 ---
+window.onload = () => {
+    document.getElementById('gasUrl').value = localStorage.getItem('roof_gas') || '';
+    document.getElementById('apiKey').value = localStorage.getItem('roof_key') || '';
+    initCanvasEvents();
 };
 
 function openSet() { document.getElementById('setModal').style.display = 'flex'; }
-function saveSet() {
-    localStorage.setItem('roof_key', document.getElementById('keyIn').value.trim());
-    localStorage.setItem('roof_gas', document.getElementById('gasIn').value.trim());
+function saveSettings() {
+    localStorage.setItem('roof_gas', document.getElementById('gasUrl').value.trim());
+    localStorage.setItem('roof_key', document.getElementById('apiKey').value.trim());
     document.getElementById('setModal').style.display = 'none';
-    alert("設定を保存しました。");
 }
 
-window.onload = () => {
-    document.getElementById('keyIn').value = localStorage.getItem('roof_key') || '';
-    document.getElementById('gasIn').value = localStorage.getItem('roof_gas') || '';
-    setupEvents();
-};
+function setMode(m) {
+    app.mode = m;
+    document.getElementById('modeScale').className = m === 'scale' ? 'btn btn-active' : 'btn';
+    document.getElementById('modeAdjust').className = m === 'adjust' ? 'btn btn-active' : 'btn';
+    document.getElementById('scaleInput').style.display = m === 'scale' ? 'block' : 'none';
+}
 
+// --- 案件管理 ---
+async function initCase() {
+    const op = document.getElementById('opCode').value.toUpperCase() || "OP";
+    const cl = document.getElementById('clName').value || "GUEST";
+    const year = new Date().getFullYear();
+    app.caseId = `${op}-${year}-${cl}-${Math.floor(100 + Math.random() * 900)}`;
+    document.getElementById('caseIdDisp').innerText = "案件ID: " + app.caseId;
+    
+    const url = localStorage.getItem('roof_gas');
+    await fetch(url, { method: 'POST', body: JSON.stringify({ 
+        action: 'saveCase', caseId: app.caseId, operator: op, client: cl 
+    })});
+    alert("案件を台帳に登録しました。");
+}
+
+// --- 画像・AI処理 ---
 function handleFile(input) {
     const reader = new FileReader();
     reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-            const cv = document.getElementById('mainCanvas');
-            const ov = document.getElementById('overlayCanvas');
-            const w = 600; 
-            const h = img.height * (w / img.width);
-            cv.width = ov.width = w; cv.height = ov.height = h;
-            cv.getContext('2d').drawImage(img, 0, 0, w, h);
-            app.points = []; // 新しい画像にしたらリセット
+        app.img = new Image();
+        app.img.onload = () => {
+            const mc = document.getElementById('mainCanvas');
+            const oc = document.getElementById('overlayCanvas');
+            const wrap = document.querySelector('.canvas-wrap');
+            const scale = Math.min(wrap.clientWidth / app.img.width, wrap.clientHeight / app.img.height);
+            mc.width = oc.width = app.img.width * scale;
+            mc.height = oc.height = app.img.height * scale;
+            mc.getContext('2d').drawImage(app.img, 0, 0, mc.width, mc.height);
+            app.parts = []; app.scalePts = [];
             render();
         };
-        img.src = e.target.result;
+        app.img.src = e.target.result;
     };
     reader.readAsDataURL(input.files[0]);
 }
@@ -105,130 +160,141 @@ function handleFile(input) {
 async function runAI() {
     const key = localStorage.getItem('roof_key');
     const gas = localStorage.getItem('roof_gas');
-    if(!key || !gas) return alert("設定からキーとURLを保存してください。");
-
-    const btn = document.getElementById('aiBtn');
-    btn.innerText = "AIが解析中..."; btn.disabled = true;
-
+    if(!key || !gas) return openSet();
+    
+    const btn = document.querySelector('.btn-orange');
+    btn.innerText = "解析中..."; btn.disabled = true;
+    
     const base64 = document.getElementById('mainCanvas').toDataURL('image/jpeg', 0.6).split(',')[1];
-
     try {
-        const res = await fetch(gas, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'runAI', apiKey: key, image: base64 })
-        });
-        const result = await res.json();
-        if(result.result !== 'success') throw new Error(result.message);
-
-        const text = result.data.candidates[0].content.parts[0].text;
-        const json = JSON.parse(text.replace(/```json|```/g, "").trim());
+        const res = await fetch(gas, { method: 'POST', body: JSON.stringify({ action: 'runAI', apiKey: key, image: base64 }) });
+        const json = await res.json();
+        const data = JSON.parse(json.data.candidates[0].content.parts[0].text.replace(/```json|```/g, "").trim());
         
-        // AIの座標をキャンバスサイズに変換
-        const ov = document.getElementById('overlayCanvas');
-        app.points = json.points.map(p => ({
-            y: (p[0] / 1000) * ov.height,
-            x: (p[1] / 1000) * ov.width
+        const oc = document.getElementById('overlayCanvas');
+        app.parts = data.parts.map(p => ({
+            label: p.label,
+            active: true,
+            points: p.points.map(pt => ({ y: (pt[0]/1000)*oc.height, x: (pt[1]/1000)*oc.width }))
         }));
-
         render();
-        document.getElementById('saveBtn').style.display = "block";
-    } catch (e) {
-        alert("エラー: " + e.message);
-    } finally {
-        btn.innerText = "✨ AIで下書きを作成"; btn.disabled = false;
-    }
+    } catch (e) { alert("AIエラー: " + e.message); }
+    finally { btn.innerText = "✨ AI下書き作成"; btn.disabled = false; }
 }
 
-// 多角形の描画
+// --- 描画・計算 ---
 function render() {
-    const ov = document.getElementById('overlayCanvas');
-    const ctx = ov.getContext('2d');
-    ctx.clearRect(0, 0, ov.width, ov.height);
+    const oc = document.getElementById('overlayCanvas');
+    const ctx = oc.getContext('2d');
+    ctx.clearRect(0,0,oc.width,oc.height);
 
-    if (app.points.length === 0) return;
+    let gross = 0, ded = 0;
 
-    // 塗りつぶし
-    ctx.fillStyle = 'rgba(255, 107, 43, 0.3)';
-    ctx.strokeStyle = '#FF6B2B';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    app.points.forEach((p, i) => {
-        if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
-    });
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    // ハンドル（角）の描画
-    app.points.forEach(p => {
-        ctx.fillStyle = '#fff';
+    app.parts.forEach(part => {
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+        part.points.forEach((p, i) => { if(i===0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); });
+        ctx.closePath();
+        
+        ctx.fillStyle = part.label === 'wall' ? 'rgba(255,107,43,0.4)' : 'rgba(59,130,246,0.6)';
         ctx.fill();
-        ctx.stroke();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+        
+        // 頂点の描画（修正モード時）
+        if(app.mode === 'adjust') {
+            part.points.forEach(p => {
+                ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill();
+            });
+        }
+
+        const areaPx = calculateArea(part.points);
+        if(part.label === 'wall') gross += areaPx; else ded += areaPx;
     });
 
-    calculateArea();
-}
-
-// 面積計算（座標法 / Surveyor's Formula）
-function calculateArea() {
-    if (app.points.length < 3) return;
-    let sum = 0;
-    for (let i = 0; i < app.points.length; i++) {
-        let j = (i + 1) % app.points.length;
-        sum += app.points[i].x * app.points[j].y;
-        sum -= app.points[j].x * app.points[i].y;
+    // スケール線の描画
+    if(app.scalePts.length > 0) {
+        ctx.strokeStyle = '#ff0'; ctx.lineWidth = 3;
+        ctx.beginPath();
+        app.scalePts.forEach((p, i) => { 
+            if(i===0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); 
+            ctx.fillStyle='#ff0'; ctx.fillRect(p.x-5,p.y-5,10,10);
+        });
+        ctx.stroke();
+        
+        if(app.scalePts.length === 2) {
+            const pxDist = Math.hypot(app.scalePts[0].x - app.scalePts[1].x, app.scalePts[0].y - app.scalePts[1].y);
+            app.pixelPerMm = pxDist / document.getElementById('realLength').value;
+        }
     }
-    // ピクセル面積を仮のm2に変換（実際は基準となる長さが必要ですが、デモ用に係数を使用）
-    const pixelArea = Math.abs(sum) / 2;
-    const realArea = (pixelArea / 500).toFixed(1); // ここはスケーリング調整が必要
-    document.getElementById('areaDisp').textContent = realArea;
+
+    // 面積換算
+    if(app.pixelPerMm > 0) {
+        const toM2 = (px) => (px / Math.pow(app.pixelPerMm, 2)) / 1000000;
+        const netM2 = toM2(gross - ded);
+        document.getElementById('netAreaDisp').innerText = netM2.toFixed(2);
+        document.getElementById('breakdown').innerText = `Gross: ${toM2(gross).toFixed(2)} / Ded: ${toM2(ded).toFixed(2)}`;
+    }
 }
 
-// ドラッグ操作のイベント設定
-function setupEvents() {
-    const ov = document.getElementById('overlayCanvas');
+function calculateArea(pts) {
+    let a = 0;
+    for(let i=0; i<pts.length; i++){
+        let j = (i+1)%pts.length;
+        a += pts[i].x * pts[j].y; a -= pts[j].x * pts[i].y;
+    }
+    return Math.abs(a) / 2;
+}
 
-    const getPos = (e) => {
-        const rect = ov.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        return { x: clientX - rect.left, y: clientY - rect.top };
-    };
+// --- イベント ---
+function initCanvasEvents() {
+    const oc = document.getElementById('overlayCanvas');
+    oc.onmousedown = (e) => {
+        const rect = oc.getBoundingClientRect();
+        const x = (e.clientX - rect.left) * (oc.width / rect.width);
+        const y = (e.clientY - rect.top) * (oc.height / rect.height);
 
-    const down = (e) => {
-        const pos = getPos(e);
-        app.selectedIdx = app.points.findIndex(p => Math.hypot(p.x - pos.x, p.y - pos.y) < 20);
-    };
-
-    const move = (e) => {
-        if (app.selectedIdx === -1) return;
-        e.preventDefault();
-        const pos = getPos(e);
-        app.points[app.selectedIdx] = pos;
+        if(app.mode === 'scale') {
+            if(app.scalePts.length >= 2) app.scalePts = [];
+            app.scalePts.push({x, y});
+        } else if(app.mode === 'adjust') {
+            // 最も近い頂点を探す
+            app.parts.forEach(part => {
+                part.points.forEach(p => {
+                    if(Math.hypot(p.x - x, p.y - y) < 15) app.selectedPoint = p;
+                });
+            });
+        }
         render();
     };
 
-    const up = () => { app.selectedIdx = -1; };
+    window.onmousemove = (e) => {
+        if(!app.selectedPoint) return;
+        const rect = oc.getBoundingClientRect();
+        app.selectedPoint.x = (e.clientX - rect.left) * (oc.width / rect.width);
+        app.selectedPoint.y = (e.clientY - rect.top) * (oc.height / rect.height);
+        render();
+    };
 
-    ov.addEventListener('mousedown', down);
-    window.addEventListener('mousemove', move);
-    window.addEventListener('mouseup', up);
-
-    ov.addEventListener('touchstart', down, { passive: false });
-    window.addEventListener('touchmove', move, { passive: false });
-    window.addEventListener('touchend', up);
+    window.onmouseup = () => { app.selectedPoint = null; };
 }
 
-async function saveData() {
+async function saveRecord() {
+    if(!app.caseId) return alert("先に案件登録をしてください");
+    const side = prompt("この撮影面を入力してください（例：東面）", "正面");
+    if(!side) return;
+
+    const net = document.getElementById('netAreaDisp').innerText;
+    const breakdown = document.getElementById('breakdown').innerText;
     const gas = localStorage.getItem('roof_gas');
-    const area = document.getElementById('areaDisp').textContent;
-    await fetch(gas, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'save', totalNetArea: area, clientName: "AI計測依頼" })
-    });
-    alert("台帳に保存しました！");
+
+    await fetch(gas, { method: 'POST', body: JSON.stringify({ 
+        action: 'saveRecord', caseId: app.caseId, sideName: side, netArea: net, grossArea: breakdown 
+    })});
+    
+    const card = document.createElement('div');
+    card.className = 'side-card';
+    card.innerHTML = `<b>${side}</b>: ${net} $m^2$`;
+    document.getElementById('sideList').appendChild(card);
+    alert("記録をスプレッドシートに保存しました。");
 }
 </script>
 </body>
