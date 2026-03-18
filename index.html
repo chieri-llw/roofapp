@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>外壁積算 Pro v15.0</title>
+<title>外壁積算 Pro v15.1</title>
 <style>
 :root{--bg:#0a0c10;--or:#FF6B2B;--bl:#3b82f6;--gn:#22c55e;--bd:#252830;--card:#111318;--in:#070910}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -23,6 +23,7 @@ input:focus{border-color:var(--or)}
 .btn.on{background:#fff;color:#000;border-color:#fff}
 .btn-or{background:var(--or);border:none;color:#fff}.btn-or:hover{background:#e55c20}
 .btn-bl{background:var(--bl);border:none;color:#fff}.btn-bl:hover{background:#2563eb}
+.btn-gn{background:var(--gn);border:none;color:#fff}.btn-gn:hover{background:#16a34a}
 .btn-sm{padding:5px 10px;font-size:12px}
 .btn-f{width:100%;display:block}
 /* case badge */
@@ -36,7 +37,7 @@ input:focus{border-color:var(--or)}
 .tot-v{font-size:22px;font-weight:700;color:var(--or)}.tot-l{font-size:11px;color:#666}
 /* ── MAIN ── */
 .main{flex:1;display:flex;flex-direction:column;min-width:0}
-.tb{height:54px;background:var(--card);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 12px;gap:7px;flex-shrink:0;overflow-x:auto}
+.tb{height:auto;min-height:54px;background:var(--card);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 10px;gap:6px;flex-shrink:0;overflow-x:auto;flex-wrap:wrap;padding:6px 10px}
 .sep{width:1px;height:26px;background:var(--bd);flex-shrink:0}
 /* canvas wrap */
 .cw{flex:1;position:relative;overflow:hidden;background:#040507;display:flex;align-items:center;justify-content:center}
@@ -57,6 +58,11 @@ canvas{position:absolute;touch-action:none}
 .sc-row{display:none;align-items:center;gap:5px}
 .sc-row input{width:68px}
 .sc-row span{font-size:12px;color:#666}
+/* draw controls */
+.draw-ctrl{display:none;align-items:center;gap:4px;flex-shrink:0}
+.dt-btn{padding:5px 8px;border-radius:6px;border:1px solid #3a3d48;background:#191c26;color:#555;cursor:pointer;font-size:11px;font-weight:700;white-space:nowrap;transition:all .15s}
+.dt-btn.wall-on{background:#2a0e00;border-color:var(--or);color:var(--or)}
+.dt-btn.open-on{background:#071a38;border-color:var(--bl);color:var(--bl)}
 /* modal */
 .mbg{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:100;display:none;align-items:center;justify-content:center}
 .mbg.open{display:flex}
@@ -122,8 +128,17 @@ canvas{position:absolute;touch-action:none}
     <div class="sep"></div>
     <button id="btnAd" class="btn" onclick="setMode('adjust')">🖱 頂点修正</button>
     <div class="sep"></div>
+    <button id="btnDr" class="btn" onclick="setMode('draw')">✏️ ポリゴン作成</button>
+    <div class="draw-ctrl" id="drawCtrl">
+      <button class="dt-btn wall-on" id="dtWall" onclick="setDrawType('wall')">🟠 外壁</button>
+      <button class="dt-btn" id="dtOpen" onclick="setDrawType('opening')">🟢 開口</button>
+      <button class="btn btn-sm btn-gn" id="btnConfirm" onclick="confirmDrawPoly()" style="display:none">✅ 確定</button>
+      <button class="btn btn-sm" onclick="cancelDraw()" style="color:#f87171;border-color:#f87171">✕ 取消</button>
+    </div>
+    <div class="sep"></div>
     <button class="btn btn-or" id="aiBtn" onclick="runAI()">✨ AI解析</button>
-    <button class="btn btn-sm" onclick="doClear()" style="color:#555" title="ポリゴン・スケールをリセット">✕</button>
+    <button class="btn btn-sm" onclick="undoLast()" title="最後の頂点/ポリゴンを取り消し" style="color:#aaa">↩ 戻す</button>
+    <button class="btn btn-sm" onclick="doClear()" style="color:#555" title="全リセット">🗑 全消去</button>
   </div>
 
   <div class="cw" id="cw">
@@ -168,6 +183,10 @@ let sides = [];
 const FACES = ['東面','西面','南面','北面','前面','裏面'];
 let faceIdx = 0;
 
+let drawPts = [];
+let drawPolyType = 'wall';
+let mousePos = null;
+
 let cfg = {
   apiKey: localStorage.getItem('r_key') || '',
   gasUrl: localStorage.getItem('r_url') || GAS_DEFAULT
@@ -177,7 +196,8 @@ const HIT = 11;
 const CLR = {
   wall: '#FF6B2B', wallF: 'rgba(255,107,43,.18)',
   open: '#3b82f6', openF: 'rgba(59,130,246,.18)',
-  scale: '#FFD700', vx: '#ffffff', vxA: '#FF6B2B'
+  scale: '#FFD700', vx: '#ffffff', vxA: '#FF6B2B',
+  drawPt: '#FF6B2B', drawPtFirst: '#FFD700'
 };
 
 const mc = document.getElementById('mc');
@@ -211,6 +231,7 @@ function handleFile(inp) {
       const { w, h } = fitSize(img.width, img.height);
       resize(w, h);
       polys = []; scalePts = []; scaleRatio = null; drag = null;
+      drawPts = []; mousePos = null;
       lastB64 = compress(img);
       drawImg(); drawOv();
       document.getElementById('rp').style.display = 'none';
@@ -237,6 +258,7 @@ function drawImg() {
 
 function drawOv() {
   oCtx.clearRect(0, 0, cW, cH);
+
   if (scalePts.length > 0) {
     scalePts.forEach(p => {
       oCtx.fillStyle = CLR.scale;
@@ -261,6 +283,7 @@ function drawOv() {
       oCtx.textAlign = 'left';
     }
   }
+
   polys.forEach((poly, pi) => {
     if (poly.points.length < 3) return;
     const isW = poly.label === 'wall';
@@ -289,18 +312,118 @@ function drawOv() {
       });
     }
   });
+
+  if (drawPts.length > 0) {
+    const sc = drawPolyType === 'wall' ? CLR.wall : CLR.open;
+    const fc = drawPolyType === 'wall' ? CLR.wallF : CLR.openF;
+    oCtx.save();
+    if (drawPts.length >= 3) {
+      oCtx.beginPath();
+      oCtx.moveTo(drawPts[0].x, drawPts[0].y);
+      drawPts.forEach((p, i) => { if (i > 0) oCtx.lineTo(p.x, p.y); });
+      oCtx.closePath();
+      oCtx.fillStyle = fc; oCtx.fill();
+    }
+    if (drawPts.length > 1) {
+      oCtx.beginPath();
+      oCtx.moveTo(drawPts[0].x, drawPts[0].y);
+      drawPts.forEach((p, i) => { if (i > 0) oCtx.lineTo(p.x, p.y); });
+      oCtx.strokeStyle = sc; oCtx.lineWidth = 2; oCtx.setLineDash([]); oCtx.stroke();
+    }
+    if (mousePos) {
+      const last = drawPts[drawPts.length - 1];
+      oCtx.beginPath();
+      oCtx.moveTo(last.x, last.y);
+      oCtx.lineTo(mousePos.x, mousePos.y);
+      oCtx.strokeStyle = sc; oCtx.lineWidth = 1.5; oCtx.setLineDash([5, 5]); oCtx.stroke(); oCtx.setLineDash([]);
+      if (drawPts.length >= 2) {
+        oCtx.beginPath();
+        oCtx.moveTo(mousePos.x, mousePos.y);
+        oCtx.lineTo(drawPts[0].x, drawPts[0].y);
+        oCtx.strokeStyle = sc; oCtx.lineWidth = 1; oCtx.globalAlpha = 0.3;
+        oCtx.setLineDash([3, 6]); oCtx.stroke(); oCtx.setLineDash([]); oCtx.globalAlpha = 1;
+      }
+    }
+    const firstNear = mousePos && drawPts.length >= 3 &&
+      Math.hypot(mousePos.x - drawPts[0].x, mousePos.y - drawPts[0].y) < 15;
+    drawPts.forEach((p, i) => {
+      const isFirst = i === 0;
+      const r = isFirst ? (firstNear ? 10 : 7) : 5;
+      oCtx.fillStyle = isFirst ? CLR.drawPtFirst : CLR.vx;
+      oCtx.strokeStyle = isFirst ? (firstNear ? '#fff' : CLR.drawPtFirst) : sc;
+      oCtx.lineWidth = isFirst ? 2.5 : 2;
+      oCtx.beginPath(); oCtx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      oCtx.fill(); oCtx.stroke();
+      oCtx.fillStyle = isFirst ? '#000' : '#fff';
+      oCtx.font = 'bold 9px sans-serif'; oCtx.textAlign = 'center';
+      oCtx.fillText(i + 1, p.x, p.y + 3.5); oCtx.textAlign = 'left';
+    });
+    if (firstNear) {
+      oCtx.font = 'bold 11px sans-serif'; oCtx.textAlign = 'center';
+      oCtx.fillStyle = 'rgba(0,0,0,.7)';
+      oCtx.fillRect(drawPts[0].x - 50, drawPts[0].y - 28, 100, 18);
+      oCtx.fillStyle = CLR.drawPtFirst;
+      oCtx.fillText('クリックで確定', drawPts[0].x, drawPts[0].y - 14);
+      oCtx.textAlign = 'left';
+    }
+    oCtx.restore();
+  }
 }
 
 function setMode(m) {
+  if (mode === 'draw' && m !== 'draw') {
+    drawPts = []; mousePos = null;
+    document.getElementById('btnConfirm').style.display = 'none';
+  }
   mode = (mode === m) ? 'none' : m;
   document.getElementById('btnSc').classList.toggle('on', mode === 'scale');
   document.getElementById('btnAd').classList.toggle('on', mode === 'adjust');
+  document.getElementById('btnDr').classList.toggle('on', mode === 'draw');
   document.getElementById('scRow').style.display = mode === 'scale' ? 'flex' : 'none';
-  ov.style.cursor = mode === 'scale' ? 'crosshair' : 'default';
+  document.getElementById('drawCtrl').style.display = mode === 'draw' ? 'flex' : 'none';
+  ov.style.cursor = (mode === 'scale' || mode === 'draw') ? 'crosshair' : 'default';
   if (mode === 'scale') { scalePts = []; scaleRatio = null; stat('📏 基準となる2点をクリック（例：サッシ幅の両端・既知の長さ）', 'info'); }
   else if (mode === 'adjust') { stat('🖱 円をドラッグして頂点を調整 / 離すと面積が再計算されます', 'info'); }
+  else if (mode === 'draw') { stat('✏️ クリックで頂点を追加 — 3点以上で「✅ 確定」ボタンが現れます / 最初の点を再クリックで自動確定', 'info'); }
   else { stat(''); }
+  if (mode !== 'draw') { drawPts = []; document.getElementById('btnConfirm').style.display = 'none'; }
   drawOv();
+}
+
+function setDrawType(t) {
+  drawPolyType = t;
+  document.getElementById('dtWall').className = 'dt-btn' + (t === 'wall' ? ' wall-on' : '');
+  document.getElementById('dtOpen').className = 'dt-btn' + (t === 'opening' ? ' open-on' : '');
+  drawOv();
+}
+
+function confirmDrawPoly() {
+  if (drawPts.length < 3) return;
+  polys.push({ label: drawPolyType, points: drawPts.map(p => ({ x: p.x, y: p.y })) });
+  const n = polys.filter(p => p.label === drawPolyType).length;
+  const lbl = drawPolyType === 'wall' ? '壁 #' + n : '開口 #' + n;
+  drawPts = []; mousePos = null;
+  document.getElementById('btnConfirm').style.display = 'none';
+  drawOv(); updateResult();
+  stat('✅ ' + lbl + ' を追加しました', 'ok');
+}
+
+function cancelDraw() {
+  drawPts = []; mousePos = null;
+  document.getElementById('btnConfirm').style.display = 'none';
+  drawOv();
+  stat('✏️ ポリゴン作成をキャンセルしました / 再びクリックで開始', 'info');
+}
+
+function undoLast() {
+  if (mode === 'draw' && drawPts.length > 0) {
+    drawPts.pop();
+    if (drawPts.length < 3) document.getElementById('btnConfirm').style.display = 'none';
+    drawOv(); stat('↩ 最後の頂点を取り消しました', ''); return;
+  }
+  if (polys.length > 0) {
+    polys.pop(); drawOv(); updateResult(); stat('↩ 最後のポリゴンを削除しました', '');
+  }
 }
 
 function getPt(e) {
@@ -330,6 +453,14 @@ function onDown(e) {
   } else if (mode === 'adjust') {
     drag = hitTest(pos);
     if (drag) ov.style.cursor = 'grabbing';
+  } else if (mode === 'draw') {
+    if (drawPts.length >= 3) {
+      const first = drawPts[0];
+      if (Math.hypot(pos.x - first.x, pos.y - first.y) < 15) { confirmDrawPoly(); return; }
+    }
+    drawPts.push({ x: pos.x, y: pos.y });
+    if (drawPts.length >= 3) document.getElementById('btnConfirm').style.display = '';
+    drawOv();
   }
 }
 
@@ -339,6 +470,13 @@ function onMove(e) {
   if (mode === 'adjust') {
     if (drag) { polys[drag.pi].points[drag.vi] = pos; drawOv(); updateResult(); }
     else { ov.style.cursor = hitTest(pos) ? 'grab' : 'default'; }
+  } else if (mode === 'draw') {
+    mousePos = pos;
+    if (drawPts.length >= 3) {
+      const first = drawPts[0];
+      ov.style.cursor = Math.hypot(pos.x - first.x, pos.y - first.y) < 15 ? 'pointer' : 'crosshair';
+    }
+    drawOv();
   }
 }
 
@@ -349,7 +487,7 @@ function onUp() {
 ov.addEventListener('mousedown', onDown);
 ov.addEventListener('mousemove', onMove);
 ov.addEventListener('mouseup', onUp);
-ov.addEventListener('mouseleave', onUp);
+ov.addEventListener('mouseleave', e => { if (mode === 'draw') { mousePos = null; drawOv(); } onUp(); });
 ov.addEventListener('touchstart', e => { e.preventDefault(); onDown(e); }, { passive: false });
 ov.addEventListener('touchmove',  e => { e.preventDefault(); onMove(e); }, { passive: false });
 ov.addEventListener('touchend',   e => { e.preventDefault(); onUp(e);   }, { passive: false });
@@ -408,19 +546,21 @@ async function runAI() {
     if (r.result !== 'success') { stat('❌ ' + (r.message || '不明なエラー'), 'err'); return; }
     const parts = r.data && r.data.parts;
     if (!parts || !parts.length) { stat('❌ AIからポリゴンデータが返りませんでした', 'err'); return; }
-    polys = parts.filter(p => Array.isArray(p.points) && p.points.length >= 3)
+    const newPolys = parts.filter(p => Array.isArray(p.points) && p.points.length >= 3)
       .map(p => ({ label: p.label === 'opening' ? 'opening' : 'wall', points: p.points.map(([y, x]) => ({ x: x * cW / 1000, y: y * cH / 1000 })) }));
-    if (!polys.length) { stat('❌ 変換後にポリゴンが0件です', 'err'); return; }
+    if (!newPolys.length) { stat('❌ 変換後にポリゴンが0件です', 'err'); return; }
+    polys = [...polys, ...newPolys];
     drawOv(); updateResult();
-    const wc = polys.filter(p => p.label === 'wall').length;
-    const oc = polys.filter(p => p.label === 'opening').length;
-    stat('✅ 検出完了 — 壁 ' + wc + '面・開口 ' + oc + '個 ｜ 「🖱 頂点修正」で調整できます', 'ok');
+    const wc = newPolys.filter(p => p.label === 'wall').length;
+    const oc = newPolys.filter(p => p.label === 'opening').length;
+    stat('✅ AI検出完了 — 壁 ' + wc + '面・開口 ' + oc + '個追加 ｜「✏️ ポリゴン作成」で手動追加も可', 'ok');
   } catch(e) { stat('❌ 通信エラー: ' + e.message, 'err'); console.error(e); }
   finally { btn.innerHTML = '✨ AI解析'; btn.disabled = false; }
 }
 
 function doClear() {
-  polys = []; scalePts = []; scaleRatio = null; drag = null;
+  polys = []; scalePts = []; scaleRatio = null; drag = null; drawPts = []; mousePos = null;
+  document.getElementById('btnConfirm').style.display = 'none';
   drawOv(); document.getElementById('rp').style.display = 'none'; stat('');
 }
 
@@ -443,7 +583,7 @@ async function initCase() {
 
 async function recordFace() {
   if (!caseId) { stat('⚠ 案件を登録してください', 'warn'); return; }
-  if (!polys.length) { stat('⚠ AI解析またはポリゴン設定が必要です', 'warn'); return; }
+  if (!polys.length) { stat('⚠ AI解析またはポリゴン作成が必要です', 'warn'); return; }
   if (!scaleRatio) { stat('⚠ 「📏 実寸設定」を先に完了してください', 'warn'); return; }
   const { wM, oM, nM } = calcAreas();
   const fn = document.getElementById('faceName').value.trim() || FACES[faceIdx] || '撮影面';
@@ -512,6 +652,7 @@ window.addEventListener('resize', () => {
   const sx = w / cW, sy = h / cH;
   polys.forEach(poly => poly.points.forEach(p => { p.x *= sx; p.y *= sy; }));
   scalePts.forEach(p => { p.x *= sx; p.y *= sy; });
+  drawPts.forEach(p => { p.x *= sx; p.y *= sy; });
   resize(w, h); drawImg();
   if (scalePts.length === 2) calcScale(); else drawOv();
   updateResult();
