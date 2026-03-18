@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>外壁積算 Pro v14.1</title>
+    <title>外壁積算 Pro v14.2 Stable</title>
     <style>
         :root { --bg: #0a0c10; --orange: #FF6B2B; --blue: #3b82f6; --border: #252830; }
         body { font-family: sans-serif; background: var(--bg); color: #e2e4e9; margin: 0; display: flex; height: 100vh; overflow: hidden; }
@@ -22,7 +22,8 @@
         canvas { position: absolute; max-width: 100%; max-height: 100%; touch-action: none; }
 
         /* UI部品 */
-        .btn { padding: 10px 16px; border-radius: 6px; border: 1px solid #444; background: #222; color: #fff; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .btn { padding: 10px 16px; border-radius: 6px; border: 1px solid #444; background: #222; color: #fff; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.2s; }
+        .btn:hover { background: #333; }
         .btn-orange { background: var(--orange); border: none; }
         .btn-active { background: #fff; color: #000; }
         .res-badge { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.85); padding: 20px; border-radius: 12px; border: 1px solid var(--orange); min-width: 150px; text-align: right; }
@@ -42,7 +43,7 @@
             <label>事業者コード / 依頼主名</label>
             <div style="display:flex; gap:5px;">
                 <input type="text" id="opCode" placeholder="NK" style="width:60px;">
-                <input type="text" id="clName" placeholder="田中様">
+                <input type="text" id="clName" placeholder="井上様">
             </div>
         </div>
         <button class="btn btn-orange" style="width:100%" onclick="initCase()">案件を新規登録</button>
@@ -62,9 +63,9 @@
         <button class="btn" onclick="document.getElementById('fileIn').click()">📷 写真読込</button>
         <button id="modeScale" class="btn" onclick="setMode('scale')">📏 実寸設定(黄線)</button>
         <button id="modeAdjust" class="btn" onclick="setMode('adjust')">🖱️ 頂点修正</button>
-        <button class="btn btn-orange" onclick="runAI()">✨ AI下書き作成</button>
+        <button class="btn btn-orange" id="aiBtn" onclick="runAI()">✨ AI下書き作成</button>
         <div id="scaleInput" style="display:none; margin-left:10px;">
-            実寸: <input type="number" id="realLength" value="1800" style="width:70px; background:#000; color:#fff; border:1px solid var(--orange); padding:5px;"> mm
+            実寸: <input type="number" id="realLength" value="1800" onchange="render()" style="width:70px; background:#000; color:#fff; border:1px solid var(--orange); padding:5px;"> mm
         </div>
     </div>
 
@@ -93,14 +94,13 @@
 let app = {
     mode: 'select',
     caseId: '',
-    parts: [], // {label, active, points[]}
-    scalePts: [], // {x, y} 2点
+    parts: [], 
+    scalePts: [], 
     pixelPerMm: 0,
     img: null,
     selectedPoint: null
 };
 
-// --- 初期設定 ---
 window.onload = () => {
     document.getElementById('gasUrl').value = localStorage.getItem('roof_gas') || '';
     document.getElementById('apiKey').value = localStorage.getItem('roof_key') || '';
@@ -119,9 +119,9 @@ function setMode(m) {
     document.getElementById('modeScale').className = m === 'scale' ? 'btn btn-active' : 'btn';
     document.getElementById('modeAdjust').className = m === 'adjust' ? 'btn btn-active' : 'btn';
     document.getElementById('scaleInput').style.display = m === 'scale' ? 'block' : 'none';
+    render();
 }
 
-// --- 案件管理 ---
 async function initCase() {
     const op = document.getElementById('opCode').value.toUpperCase() || "OP";
     const cl = document.getElementById('clName').value || "GUEST";
@@ -130,13 +130,13 @@ async function initCase() {
     document.getElementById('caseIdDisp').innerText = "案件ID: " + app.caseId;
     
     const url = localStorage.getItem('roof_gas');
+    if(!url) return alert("GASの設定が必要です");
     await fetch(url, { method: 'POST', body: JSON.stringify({ 
         action: 'saveCase', caseId: app.caseId, operator: op, client: cl 
     })});
-    alert("案件を台帳に登録しました。");
+    alert("案件を登録しました");
 }
 
-// --- 画像・AI処理 ---
 function handleFile(input) {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -162,27 +162,40 @@ async function runAI() {
     const gas = localStorage.getItem('roof_gas');
     if(!key || !gas) return openSet();
     
-    const btn = document.querySelector('.btn-orange');
+    const btn = document.getElementById('aiBtn');
     btn.innerText = "解析中..."; btn.disabled = true;
     
     const base64 = document.getElementById('mainCanvas').toDataURL('image/jpeg', 0.6).split(',')[1];
     try {
         const res = await fetch(gas, { method: 'POST', body: JSON.stringify({ action: 'runAI', apiKey: key, image: base64 }) });
         const json = await res.json();
-        const data = JSON.parse(json.data.candidates[0].content.parts[0].text.replace(/```json|```/g, "").trim());
         
+        // --- 修正されたデータ取得ロジック ---
+        if (!json.data || !json.data.candidates || !json.data.candidates[0]) {
+            throw new Error("AIから有効な応答がありませんでした");
+        }
+        
+        const rawText = json.data.candidates[0].content.parts[0].text;
+        const cleanJsonText = rawText.replace(/```json|```/g, "").trim();
+        const data = JSON.parse(cleanJsonText);
+        
+        if (!data.parts) throw new Error("解析データ(parts)が見つかりません");
+
         const oc = document.getElementById('overlayCanvas');
         app.parts = data.parts.map(p => ({
             label: p.label,
             active: true,
             points: p.points.map(pt => ({ y: (pt[0]/1000)*oc.height, x: (pt[1]/1000)*oc.width }))
         }));
+        
         render();
-    } catch (e) { alert("AIエラー: " + e.message); }
+    } catch (e) { 
+        console.error(e);
+        alert("AIエラー: " + e.message); 
+    }
     finally { btn.innerText = "✨ AI下書き作成"; btn.disabled = false; }
 }
 
-// --- 描画・計算 ---
 function render() {
     const oc = document.getElementById('overlayCanvas');
     const ctx = oc.getContext('2d');
@@ -199,10 +212,9 @@ function render() {
         ctx.fill();
         ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
         
-        // 頂点の描画（修正モード時）
         if(app.mode === 'adjust') {
             part.points.forEach(p => {
-                ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI*2); ctx.fill();
             });
         }
 
@@ -210,7 +222,6 @@ function render() {
         if(part.label === 'wall') gross += areaPx; else ded += areaPx;
     });
 
-    // スケール線の描画
     if(app.scalePts.length > 0) {
         ctx.strokeStyle = '#ff0'; ctx.lineWidth = 3;
         ctx.beginPath();
@@ -226,7 +237,6 @@ function render() {
         }
     }
 
-    // 面積換算
     if(app.pixelPerMm > 0) {
         const toM2 = (px) => (px / Math.pow(app.pixelPerMm, 2)) / 1000000;
         const netM2 = toM2(gross - ded);
@@ -244,7 +254,6 @@ function calculateArea(pts) {
     return Math.abs(a) / 2;
 }
 
-// --- イベント ---
 function initCanvasEvents() {
     const oc = document.getElementById('overlayCanvas');
     oc.onmousedown = (e) => {
@@ -256,7 +265,6 @@ function initCanvasEvents() {
             if(app.scalePts.length >= 2) app.scalePts = [];
             app.scalePts.push({x, y});
         } else if(app.mode === 'adjust') {
-            // 最も近い頂点を探す
             app.parts.forEach(part => {
                 part.points.forEach(p => {
                     if(Math.hypot(p.x - x, p.y - y) < 15) app.selectedPoint = p;
@@ -279,22 +287,22 @@ function initCanvasEvents() {
 
 async function saveRecord() {
     if(!app.caseId) return alert("先に案件登録をしてください");
-    const side = prompt("この撮影面を入力してください（例：東面）", "正面");
+    const side = prompt("撮影面（例：正面、東面）", "正面");
     if(!side) return;
 
     const net = document.getElementById('netAreaDisp').innerText;
-    const breakdown = document.getElementById('breakdown').innerText;
     const gas = localStorage.getItem('roof_gas');
+    const b = document.getElementById('breakdown').innerText;
 
     await fetch(gas, { method: 'POST', body: JSON.stringify({ 
-        action: 'saveRecord', caseId: app.caseId, sideName: side, netArea: net, grossArea: breakdown 
+        action: 'saveRecord', caseId: app.caseId, sideName: side, netArea: net, grossArea: b 
     })});
     
     const card = document.createElement('div');
     card.className = 'side-card';
     card.innerHTML = `<b>${side}</b>: ${net} $m^2$`;
     document.getElementById('sideList').appendChild(card);
-    alert("記録をスプレッドシートに保存しました。");
+    alert("保存完了");
 }
 </script>
 </body>
