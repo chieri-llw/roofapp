@@ -2,85 +2,114 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>外壁積算 v10.4 Direct Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>外壁積算システム v11.0</title>
     <style>
-        body { background: #0a0c10; color: #fff; font-family: sans-serif; text-align: center; }
-        .panel { background: #111318; padding: 20px; border-radius: 12px; max-width: 400px; margin: 20px auto; }
-        canvas { max-width: 100%; display: block; margin: 10px auto; }
-        .btn { background: #FF6B2B; color: #fff; padding: 15px; width: 100%; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #0a0c10; color: #e8eaf0; font-family: 'Segoe UI', 'Hiragino Sans', sans-serif; min-height: 100vh; padding: 16px; }
+        h1 { text-align: center; font-size: 1.3rem; color: #FF6B2B; padding: 14px 0 10px; letter-spacing: 1px; }
+        .version-tag { text-align: center; font-size: 0.7rem; color: #555; margin-bottom: 16px; }
+        .card { background: #111318; border-radius: 12px; padding: 16px; margin-bottom: 14px; border: 1px solid #1e2130; }
+        .card-title { font-size: 0.75rem; font-weight: bold; color: #FF6B2B; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+        .card-title::before { content: ''; display: inline-block; width: 3px; height: 14px; background: #FF6B2B; border-radius: 2px; }
+        .form-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        label { font-size: 0.72rem; color: #888; font-weight: 500; }
+        input[type="text"], input[type="password"] { background: #0e1016; border: 1px solid #2a2e3e; border-radius: 8px; color: #e8eaf0; padding: 9px 12px; font-size: 0.85rem; width: 100%; outline: none; transition: border-color 0.2s; }
+        input[type="text"]:focus, input[type="password"]:focus { border-color: #FF6B2B; }
+        input[type="text"]::placeholder, input[type="password"]::placeholder { color: #444; }
+        .btn { border: none; border-radius: 8px; font-size: 0.85rem; font-weight: bold; cursor: pointer; padding: 11px 16px; width: 100%; transition: opacity 0.2s, transform 0.1s; }
+        .btn:active { transform: scale(0.98); }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-primary { background: #FF6B2B; color: #fff; }
+        .btn-primary:hover:not(:disabled) { background: #e55c20; }
+        .btn-secondary { background: #1e2130; color: #aaa; }
+        .btn-secondary:hover:not(:disabled) { background: #252840; color: #fff; }
+        .btn-success { background: #1a7a3c; color: #fff; }
+        .btn-success:hover:not(:disabled) { background: #1e8f46; }
+        .btn-row { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-row .btn { flex: 1; }
+        .case-number-display { background: #0e1016; border: 1px solid #FF6B2B44; border-radius: 8px; padding: 10px 14px; font-size: 1rem; font-weight: bold; color: #FF6B2B; text-align: center; letter-spacing: 1px; min-height: 42px; display: flex; align-items: center; justify-content: center; }
+        .case-number-display.empty { color: #333; font-size: 0.78rem; }
+        .upload-area { border: 2px dashed #2a2e3e; border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; transition: border-color 0.2s; position: relative; }
+        .upload-area:hover { border-color: #FF6B2B88; }
+        .upload-area input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+        .upload-icon { font-size: 2rem; color: #333; margin-bottom: 6px; }
+        .upload-text { font-size: 0.8rem; color: #555; }
+        #mainCanvas { width: 100%; display: block; border-radius: 8px; background: #070a0d; }
+        .canvas-wrap { position: relative; margin-top: 12px; }
+        .area-display { background: #0e1016; border: 1px solid #2a2e3e; border-radius: 8px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+        .area-label { font-size: 0.75rem; color: #666; }
+        .area-value { font-size: 1.1rem; font-weight: bold; color: #e8eaf0; }
+        .area-value.has-value { color: #4fc3f7; }
+        .status-bar { border-radius: 8px; padding: 10px 14px; font-size: 0.78rem; font-weight: 500; margin-top: 10px; display: none; }
+        .status-bar.show { display: block; }
+        .status-bar.info { background: #0d1a2e; color: #4fc3f7; border: 1px solid #1a3a5c; }
+        .status-bar.success { background: #0d1f12; color: #66bb6a; border: 1px solid #1a4026; }
+        .status-bar.error { background: #1f0d0d; color: #ef5350; border: 1px solid #5c1a1a; }
+        .status-bar.warning { background: #1f1a0d; color: #ffa726; border: 1px solid #5c480a; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #ffffff44; border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px; }
+        .api-section { margin-top: 4px; }
+        .api-toggle { font-size: 0.72rem; color: #555; cursor: pointer; text-decoration: underline; background: none; border: none; padding: 4px 0; display: block; width: 100%; text-align: left; }
+        .api-toggle:hover { color: #888; }
+        #apiKeyField { margin-top: 8px; }
     </style>
 </head>
 <body>
-<div class="panel">
-    <h3>直接通信テスト版</h3>
-    <input type="file" id="fileIn" onchange="handleFile(this)">
-    <canvas id="mainCanvas"></canvas>
-    <button class="btn" id="aiBtn" onclick="runDirectAI()">直接AI解析を実行</button>
+<h1>🏠 外壁積算システム</h1>
+<div class="version-tag">v11.0 — Gemini 2.5 Flash + GAS連携</div>
+<div class="card">
+    <div class="card-title">① 案件情報</div>
+    <div class="form-row">
+        <div class="form-group"><label>事業者コード</label><input type="text" id="bizCode" placeholder="例: NK" maxlength="10"></div>
+        <div class="form-group"><label>依頼主名</label><input type="text" id="clientName" placeholder="例: 田中"></div>
+        <div class="form-group"><label>住所（任意）</label><input type="text" id="address" placeholder="例: 東京都渋谷区1-1-1"></div>
+    </div>
+    <button class="btn btn-secondary" id="registerBtn" onclick="registerCase()">案件番号を発行</button>
+    <div style="margin-top: 10px;"><div class="case-number-display empty" id="caseNumberDisplay">案件番号を発行してください</div></div>
+    <div class="status-bar" id="registerStatus"></div>
 </div>
-<div id="res" style="color: #FF6B2B; font-weight: bold; margin-top: 20px;">結果待ち...</div>
+<div class="card">
+    <div class="card-title">② 画像アップロード</div>
+    <div class="upload-area" id="uploadArea">
+        <div class="upload-icon">📷</div>
+        <div class="upload-text">タップして外壁写真を選択</div>
+        <input type="file" accept="image/*" onchange="handleFile(this)" id="fileInput">
+    </div>
+    <div class="canvas-wrap"><canvas id="mainCanvas"></canvas></div>
+    <div class="area-display"><span class="area-label">推定面積</span><span class="area-value" id="areaDisplay">—</span></div>
+    <div class="api-section">
+        <button class="api-toggle" onclick="toggleApiKey()">▸ Gemini APIキーを設定</button>
+        <div id="apiKeyField" style="display:none;"><input type="password" id="apiKey" placeholder="AIzaSy..."></div>
+    </div>
+    <div class="btn-row">
+        <button class="btn btn-primary" id="aiBtn" onclick="runAI()" disabled>🤖 AI解析</button>
+        <button class="btn btn-secondary" id="clearBtn" onclick="clearCanvas()" disabled>クリア</button>
+    </div>
+    <div class="status-bar" id="aiStatus"></div>
+</div>
+<div class="card">
+    <div class="card-title">③ 積算記録に保存</div>
+    <button class="btn btn-success" id="saveBtn" onclick="saveAnalysis()" disabled>💾 スプレッドシートに保存</button>
+    <div class="status-bar" id="saveStatus"></div>
+</div>
 <script>
-function handleFile(input) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-            const cv = document.getElementById('mainCanvas');
-            cv.width = 400; cv.height = img.height * (400 / img.width);
-            cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(input.files[0]);
-}
-
-async function runDirectAI() {
-    const key = prompt("APIキーを入力してください");
-    if (!key) return;
-
-    const btn = document.getElementById('aiBtn');
-    btn.innerText = "通信中...";
-    btn.disabled = true;
-
-    const base64 = document.getElementById('mainCanvas').toDataURL('image/jpeg', 0.5).split(',')[1];
-
-    // gemini-2.5-flash (gemini-2.0-flash-lite は廃止)
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`;
-
-    const payload = {
-        contents: [{
-            parts: [
-                { text: "Return ONLY JSON: {\"points\": [[y, x], ...]} for building outline." },
-                { inline_data: { mime_type: "image/jpeg", data: base64 } }
-            ]
-        }]
-    };
-
-    try {
-        const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        const result = await res.json();
-
-        if (res.status === 429) {
-            document.getElementById('res').innerText = "❌ 429 制限中です。請求先アカウントを有効化してください。";
-        } else if (res.status === 404) {
-            document.getElementById('res').innerText = "❌ 404 モデルが見つかりません: " + (result?.error?.message || "");
-        } else if (res.ok) {
-            document.getElementById('res').innerText = "✅ 成功！GASなしで通信できました。";
-            console.log("API応答:", result);
-        } else {
-            document.getElementById('res').innerText = "Error: " + JSON.stringify(result);
-        }
-    } catch (e) {
-        document.getElementById('res').innerText = "通信エラー（CORS等）: " + e.message;
-    } finally {
-        btn.innerText = "直接AI解析を実行";
-        btn.disabled = false;
-    }
-}
+const GAS_URL='https://script.google.com/macros/s/AKfycbyr775Ax3nrWpb9VDXyJ6ObNCZ3aIgAEaKV0h84InESCAt9oTh6c2jCSNuapDH0J-l8/exec';
+let currentCaseNumber=null,currentArea=null,imageLoaded=false,polygonPoints=null;
+function toggleApiKey(){const f=document.getElementById('apiKeyField'),btn=document.querySelector('.api-toggle');if(f.style.display==='none'){f.style.display='block';btn.textContent='▾ Gemini APIキーを設定';}else{f.style.display='none';btn.textContent='▸ Gemini APIキーを設定';}}
+function showStatus(id,msg,type){const el=document.getElementById(id);el.textContent=msg;el.className='status-bar show '+type;}
+function hideStatus(id){document.getElementById(id).className='status-bar';}
+async function registerCase(){const code=document.getElementById('bizCode').value.trim(),name=document.getElementById('clientName').value.trim(),addr=document.getElementById('address').value.trim();if(!code||!name){showStatus('registerStatus','⚠️ 事業者コードと依頼主名を入力してください','warning');return;}const btn=document.getElementById('registerBtn');btn.innerHTML='<span class="spinner"></span>発行中...';btn.disabled=true;hideStatus('registerStatus');try{const res=await postToGAS({action:'registerCase',code,name,address:addr});if(res.result==='success'){currentCaseNumber=res.caseNumber;const disp=document.getElementById('caseNumberDisplay');disp.textContent=currentCaseNumber;disp.classList.remove('empty');showStatus('registerStatus','✅ 案件番号を発行しました','success');updateSaveButton();}else{showStatus('registerStatus','❌ '+(res.message||'エラーが発生しました'),'error');}}catch(e){showStatus('registerStatus','❌ 通信エラー: '+e.message,'error');}finally{btn.innerHTML='案件番号を発行';btn.disabled=false;}}
+function handleFile(input){if(!input.files[0])return;const reader=new FileReader();reader.onload=(e)=>{const img=new Image();img.onload=()=>{const cv=document.getElementById('mainCanvas');const maxW=cv.parentElement.clientWidth||360;cv.width=maxW;cv.height=Math.round(img.height*(maxW/img.width));const ctx=cv.getContext('2d');ctx.drawImage(img,0,0,cv.width,cv.height);imageLoaded=true;polygonPoints=null;currentArea=null;document.getElementById('areaDisplay').textContent='—';document.getElementById('areaDisplay').classList.remove('has-value');const area=document.getElementById('uploadArea');area.querySelector('.upload-icon').textContent='✅';area.querySelector('.upload-text').textContent=input.files[0].name;document.getElementById('aiBtn').disabled=false;document.getElementById('clearBtn').disabled=false;updateSaveButton();};img.src=e.target.result;};reader.readAsDataURL(input.files[0]);}
+async function runAI(){if(!imageLoaded)return;const apiKey=document.getElementById('apiKey').value.trim();if(!apiKey){showStatus('aiStatus','⚠️ Gemini APIキーを入力してください（「APIキーを設定」をタップ）','warning');document.getElementById('apiKeyField').style.display='block';document.querySelector('.api-toggle').textContent='▾ Gemini APIキーを設定';return;}const btn=document.getElementById('aiBtn');btn.innerHTML='<span class="spinner"></span>AI解析中...';btn.disabled=true;showStatus('aiStatus','🔍 Gemini 2.5 Flashで外壁輪郭を検出中...','info');try{const cv=document.getElementById('mainCanvas');const base64=cv.toDataURL('image/jpeg',0.7).split(',')[1];const res=await postToGAS({action:'runAI',apiKey,image:base64});if(res.result==='success'){const aiData=res.data;const rawText=aiData.candidates?.[0]?.content?.parts?.[0]?.text||'';let parsed;try{const m=rawText.match(/\{[\s\S]*\}/);parsed=JSON.parse(m?m[0]:rawText);}catch{showStatus('aiStatus','❌ JSON解析失敗: '+rawText.substring(0,80),'error');return;}polygonPoints=parsed.points;if(!polygonPoints||polygonPoints.length<3){showStatus('aiStatus','❌ 有効なポイントが取得できませんでした','error');return;}drawPolygon(cv,polygonPoints);const area=calcArea(cv,polygonPoints);currentArea=area;const dispEl=document.getElementById('areaDisplay');dispEl.textContent=area.toLocaleString()+' px²';dispEl.classList.add('has-value');showStatus('aiStatus','✅ 検出完了！ '+polygonPoints.length+'点のポリゴンを描画しました','success');updateSaveButton();}else if(res.result==='ai_error'){showStatus('aiStatus','❌ Gemini APIエラー: '+(res.message||''),'error');}else{showStatus('aiStatus','❌ '+(res.message||'エラーが発生しました'),'error');}}catch(e){showStatus('aiStatus','❌ 通信エラー: '+e.message,'error');}finally{btn.innerHTML='🤖 AI解析';btn.disabled=false;}}
+function drawPolygon(cv,points){const ctx=cv.getContext('2d');const fi=document.getElementById('fileInput');if(fi.files[0]){const img=new Image();img.onload=()=>{ctx.drawImage(img,0,0,cv.width,cv.height);_drawOverlay(ctx,cv,points);};const r=new FileReader();r.onload=(e)=>{img.src=e.target.result;};r.readAsDataURL(fi.files[0]);}else{_drawOverlay(ctx,cv,points);}}
+function _drawOverlay(ctx,cv,points){const toX=(nx)=>nx*cv.width/1000;const toY=(ny)=>ny*cv.height/1000;ctx.beginPath();ctx.moveTo(toX(points[0][1]),toY(points[0][0]));for(let i=1;i<points.length;i++){ctx.lineTo(toX(points[i][1]),toY(points[i][0]));}ctx.closePath();ctx.fillStyle='rgba(255,107,43,0.25)';ctx.fill();ctx.strokeStyle='#FF6B2B';ctx.lineWidth=2.5;ctx.stroke();ctx.fillStyle='#FF6B2B';points.forEach(([y,x])=>{ctx.beginPath();ctx.arc(toX(x),toY(y),3.5,0,Math.PI*2);ctx.fill();});}
+function calcArea(cv,points){const toX=(nx)=>nx*cv.width/1000;const toY=(ny)=>ny*cv.height/1000;let a=0;const n=points.length;for(let i=0;i<n;i++){const j=(i+1)%n;a+=toX(points[i][1])*toY(points[j][0]);a-=toX(points[j][1])*toY(points[i][0]);}return Math.round(Math.abs(a)/2);}
+function clearCanvas(){const cv=document.getElementById('mainCanvas');const ctx=cv.getContext('2d');const fi=document.getElementById('fileInput');if(fi.files[0]){const img=new Image();img.onload=()=>{ctx.drawImage(img,0,0,cv.width,cv.height);};const r=new FileReader();r.onload=(e)=>{img.src=e.target.result;};r.readAsDataURL(fi.files[0]);}else{ctx.clearRect(0,0,cv.width,cv.height);}polygonPoints=null;currentArea=null;document.getElementById('areaDisplay').textContent='—';document.getElementById('areaDisplay').classList.remove('has-value');hideStatus('aiStatus');updateSaveButton();}
+async function saveAnalysis(){if(!currentCaseNumber){showStatus('saveStatus','⚠️ 先に案件番号を発行してください','warning');return;}if(!currentArea){showStatus('saveStatus','⚠️ 先にAI解析を実行してください','warning');return;}const btn=document.getElementById('saveBtn');btn.innerHTML='<span class="spinner"></span>保存中...';btn.disabled=true;hideStatus('saveStatus');try{const res=await postToGAS({action:'saveAnalysis',caseNumber:currentCaseNumber,area:currentArea});if(res.result==='success'){showStatus('saveStatus','✅ '+(res.message||'積算記録に保存しました！'),'success');}else{showStatus('saveStatus','❌ '+(res.message||'エラーが発生しました'),'error');btn.disabled=false;}}catch(e){showStatus('saveStatus','❌ 通信エラー: '+e.message,'error');btn.disabled=false;}finally{btn.innerHTML='💾 スプレッドシートに保存';}}
+function updateSaveButton(){document.getElementById('saveBtn').disabled=!(currentCaseNumber&&currentArea);}
+async function postToGAS(data){const res=await fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)});if(!res.ok)throw new Error('HTTP '+res.status);return res.json();}
 </script>
 </body>
 </html>
