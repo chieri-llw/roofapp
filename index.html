@@ -721,7 +721,7 @@ function setMode(m) {
   document.getElementById('fillCtrl').style.display=mode==='fill'?'flex':'none';
   ov.style.cursor=(mode==='scale'||mode==='draw'||mode==='fill')?'crosshair':'default';
   if (mode==='scale')  { scalePts=[]; scaleRatio=null; stat('📏 基準となる2点をクリック（例：サッシ幅・既知の長さ）','info'); }
-  else if (mode==='adjust') stat('🖱 白い円をドラッグして頂点を調整 / 離すと面積が再計算されます','info');
+  else if (mode==='adjust') stat('🖱 ドラッグ→頂点移動 / 右クリック→頂点削除（3点以下でポリゴン削除）','info');
   else if (mode==='draw')   stat('✏️ クリックで頂点を追加 — 3点以上で✅確定 / 最初の点を再クリックで自動確定','info');
   else if (mode==='fill')   stat('🎯 外壁や開口の中心をクリック — エッジと色で境界を自動検出します','info');
   else stat('');
@@ -838,6 +838,8 @@ ov.addEventListener('mouseleave',e=>{ if(mode==='draw'){mousePos=null;drawOv();}
 ov.addEventListener('touchstart',e=>{ e.preventDefault(); onDown(e); },{passive:false});
 ov.addEventListener('touchmove', e=>{ e.preventDefault(); onMove(e); },{passive:false});
 ov.addEventListener('touchend',  e=>{ e.preventDefault(); onUp(e);   },{passive:false});
+function onRightClick(e){e.preventDefault();if(mode!=='adjust')return;const pos=getPt(e);const hit=hitTest(pos);if(!hit)return;const{pi,vi}=hit;const poly=polys[pi];if(poly.mode!=='polygon')return;if(poly.points.length<=3){polys.splice(pi,1);bumpEpoch();drawOv();updateResult();stat('🗑 ポリゴンを削除しました','ok');}else{poly.points.splice(vi,1);drawOv();updateResult();stat('🗑 頂点を削除しました','ok');}}
+ov.addEventListener('contextmenu',onRightClick);
 
 /* ══════════════════════════════════════════════
    SCALE CALIBRATION
